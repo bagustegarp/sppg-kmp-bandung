@@ -637,9 +637,9 @@
                 </div>
 
                 <div class="input-group">
-                    <label class="form-label">Evident Lokasi</label>
-                    <input type="file" id="input-evident" class="custom-input" accept="image/*" style="padding: 7px; font-size: 11px;" onchange="previewImage(this)">
-                    <img id="preview-evident-img" style="max-width: 100%; border-radius: 8px; display: none; border: 1.5px solid #93c5fd; margin-top: 5px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.1);">
+                    <label class="form-label">Evident Lokasi (Wajib PDF, Maks. 2MB)</label>
+                    <input type="file" id="input-evident" class="custom-input" accept="application/pdf,.pdf" style="padding: 7px; font-size: 11px;" onchange="validatePdfFile(this)">
+                    <div id="preview-evident-pdf" style="display: none; align-items: center; gap: 6px; padding: 7px 10px; background: #eff6ff; border-radius: 8px; border: 1.5px solid #93c5fd; margin-top: 5px; font-size: 11px; font-weight: 700; color: #1e3a8a; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.1); word-break: break-all;"></div>
                 </div>
             </div>
             
@@ -784,6 +784,7 @@
 
         let masterDraftStore = [];
         let temporaryFileObj = null;
+        const MAX_PDF_SIZE = 2 * 1024 * 1024; // 2 MB
 
         const kecDropdown = document.getElementById('input-kecamatan');
         Object.keys(wilayahBandung).sort().forEach(kec => {
@@ -838,18 +839,37 @@
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('mobile-overlay').classList.toggle('show'); }
 
-        function previewImage(input) {
-            const preview = document.getElementById('preview-evident-img');
+        function validatePdfFile(input) {
+            const preview = document.getElementById('preview-evident-pdf');
             if (input.files && input.files[0]) {
-                temporaryFileObj = input.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
+                const file = input.files[0];
+                const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
+                if (!isPdf) {
+                    showToast("Format file ditolak! Evident Lokasi wajib berformat PDF (.pdf).", "error");
+                    input.value = '';
+                    preview.style.display = 'none';
+                    temporaryFileObj = null;
+                    return;
                 }
-                reader.readAsDataURL(input.files[0]);
+
+                if (file.size > MAX_PDF_SIZE) {
+                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                    showToast(`Ukuran file terlalu besar (${sizeMB} MB)! Maksimal ukuran PDF adalah 2 MB.`, "error");
+                    input.value = '';
+                    preview.style.display = 'none';
+                    temporaryFileObj = null;
+                    return;
+                }
+
+                temporaryFileObj = file;
+                const sizeText = file.size >= 1024 * 1024 
+                    ? `${(file.size / (1024 * 1024)).toFixed(2)} MB` 
+                    : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+
+                preview.innerHTML = `<i class="fas fa-file-pdf" style="color: #ef4444; font-size: 14px; flex-shrink: 0;"></i> <span>${file.name} <span style="color: #0284c7; font-weight: 600;">(${sizeText})</span></span>`;
+                preview.style.display = 'flex';
             } else {
-                preview.src = '';
                 preview.style.display = 'none';
                 temporaryFileObj = null;
             }
@@ -864,7 +884,7 @@
             document.getElementById('input-pegawai').value = '';
             document.getElementById('input-penerima').value = '';
             document.getElementById('input-evident').value = '';
-            document.getElementById('preview-evident-img').style.display = 'none';
+            document.getElementById('preview-evident-pdf').style.display = 'none';
             temporaryFileObj = null;
         }
 
@@ -886,6 +906,17 @@
 
             if(!sppg || !kecamatan || !kelurahan) {
                 showToast("Nama SPPG, Kecamatan, dan Kelurahan wajib diisi!", "warning");
+                return;
+            }
+
+            if(!temporaryFileObj) {
+                showToast("Evident Lokasi (file PDF maks. 2MB) wajib diunggah!", "warning");
+                return;
+            }
+
+            const isPdf = temporaryFileObj.type === 'application/pdf' || temporaryFileObj.name.toLowerCase().endsWith('.pdf');
+            if(!isPdf || temporaryFileObj.size > MAX_PDF_SIZE) {
+                showToast("File Evident Lokasi harus berformat PDF dengan ukuran maksimal 2MB!", "error");
                 return;
             }
 
@@ -927,7 +958,7 @@
                             <div class="data-item"><span class="data-label">Kepala SPPG</span><span class="data-value">${item.kepala || '-'}</span></div>
                             <div class="data-item"><span class="data-label">Jumlah Pegawai</span><span class="data-value">${item.pegawai || '0'} Orang</span></div>
                             <div class="data-item"><span class="data-label">Penerima Manfaat / Sekolah</span><span class="data-value">${item.penerima || '0'} Target</span></div>
-                            <div class="data-item"><span class="data-label">Evident Lokasi</span><span class="data-value"><i class="fas fa-image" style="color: #2563eb; margin-right: 4px;"></i> ${fileStatus}</span></div>
+                            <div class="data-item"><span class="data-label">Evident Lokasi</span><span class="data-value"><i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${fileStatus}</span></div>
                         </div>
                         <div class="card-actions">
                             <button class="action-btn action-delete" onclick="hapusDraft(${index})"><i class="fas fa-trash"></i> Hapus</button>
