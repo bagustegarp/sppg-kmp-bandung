@@ -997,7 +997,7 @@
                 return;
             }
 
-            showConfirm("Submit ke Supabase", `Anda akan mengirim data ${masterDraftStore.length} SPPG ke Supabase Storage & Database. Lanjutkan?`, false, async () => {
+            showConfirm("Submit ke ADMIN", `Anda akan mengirim data ${masterDraftStore.length} SPPG ke ADMIN. Lanjutkan?`, false, async () => {
                 const btn = document.querySelector('.btn-submit'); 
                 const originalHtml = btn.innerHTML; 
                 btn.innerHTML = `<span><i class="fas fa-spinner fa-spin"></i> Upload...</span>`; 
