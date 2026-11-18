@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> SPPG & KMP - Kota Bandung</title>
+    <title>SPPG & KMP - Kota Bandung</title>
     <link rel="icon" href="logo-bagtapem.png" type="image/png">
     
     <!-- Modern Geometric & UI Fonts -->
@@ -161,6 +161,20 @@
         .sidebar-content::-webkit-scrollbar-thumb { background: rgba(37, 99, 235, 0.2); border-radius: 10px; }
         .sidebar-content::-webkit-scrollbar-thumb:hover { background: rgba(37, 99, 235, 0.4); }
 
+        .edit-mode-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .edit-mode-banner.show { display: flex; }
+
         .form-label { 
             color: var(--text-navy); 
             font-size: 10.5px; 
@@ -228,6 +242,39 @@
         .input-group:nth-child(7) { animation-delay: 0.28s; }
         .input-group:nth-child(8) { animation-delay: 0.32s; }
 
+        .pdf-preview-chip {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 7px 10px;
+            background: #eff6ff;
+            border-radius: 8px;
+            border: 1.5px solid #93c5fd;
+            margin-top: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #1e3a8a;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.1);
+            word-break: break-all;
+        }
+        .btn-mini-preview {
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+        }
+        .btn-mini-preview:hover { background: var(--accent-deep); }
+
         .sidebar-footer { 
             padding: 14px 20px; 
             border-top: 1px solid var(--sidebar-border); 
@@ -258,6 +305,10 @@
             box-shadow: 0 10px 22px rgba(37, 99, 235, 0.36); 
             transform: translateY(-2px); 
         }
+        .btn-save.editing-state {
+            background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+            box-shadow: 0 6px 16px rgba(245, 158, 11, 0.3);
+        }
 
         /* MAIN WORKSPACE & EMBOSS BACKGROUND */
         .main-workspace { 
@@ -279,12 +330,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.5s ease;
         }
         .workspace-emboss-layer::after {
             content: '';
             position: absolute;
             inset: 0;
             background: radial-gradient(circle at 65% 45%, rgba(37, 99, 235, 0.03) 0%, rgba(14, 165, 233, 0.06) 45%, rgba(244, 248, 255, 0.92) 85%);
+            transition: opacity 0.5s ease;
         }
         .emboss-bg-img {
             width: 100%;
@@ -296,7 +349,7 @@
             mix-blend-mode: multiply;
             -webkit-mask-image: radial-gradient(circle at 58% 52%, rgba(0,0,0,1) 15%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0) 85%);
             mask-image: radial-gradient(circle at 58% 52%, rgba(0,0,0,1) 15%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0) 85%);
-            transition: opacity 0.6s ease;
+            transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .emboss-bg-img.fallback-logo {
             width: 400px;
@@ -306,6 +359,24 @@
             filter: grayscale(100%) contrast(130%) drop-shadow(0 2px 1px rgba(255,255,255,0.9));
             -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.2) 100%);
             mask-image: linear-gradient(180deg, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.2) 100%);
+        }
+
+        /* Mode Minimize: tampilkan background watermark utuh saja tanpa tulisan & logo apapun */
+        .main-workspace.minimized-mode .workspace-emboss-layer::after {
+            opacity: 0;
+        }
+        .main-workspace.minimized-mode .emboss-bg-img {
+            opacity: 0.92;
+            filter: none;
+            mix-blend-mode: normal;
+            -webkit-mask-image: none;
+            mask-image: none;
+        }
+        .main-workspace.minimized-mode .emboss-bg-img.fallback-logo {
+            opacity: 0.35;
+            filter: none;
+            -webkit-mask-image: none;
+            mask-image: none;
         }
 
         .topbar { 
@@ -371,6 +442,11 @@
             transform: translateY(-2px) scale(1.02); 
             box-shadow: 0 10px 24px rgba(16, 185, 129, 0.4);
         }
+        .btn-submit:disabled {
+            opacity: 0.75;
+            cursor: not-allowed;
+            transform: none;
+        }
 
         .workspace-content { 
             padding: 26px 28px 80px 28px; 
@@ -387,11 +463,6 @@
         .workspace-content::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
         .workspace-content.hidden-workspace { opacity: 0; transform: scaleY(0.9); pointer-events: none; position: absolute; visibility: hidden; }
 
-        .workspace-empty-watermark { position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; color: #93c5fd; text-align: center; z-index: 2; }
-        .workspace-empty-watermark.show { opacity: 1; transition-delay: 0.2s; }
-        .workspace-empty-watermark i { font-size: 62px; margin-bottom: 16px; color: #bfdbfe; }
-        .workspace-empty-watermark h2 { font-family: 'Outfit', sans-serif; font-size: 21px; font-weight: 800; color: #1e3a8a; margin-bottom: 6px; }
-
         .workspace-toolbar { 
             display: flex; 
             justify-content: space-between; 
@@ -406,19 +477,43 @@
             flex-wrap: wrap; 
             gap: 12px; 
         }
-        .draft-badge { 
+        .toolbar-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .tab-badge-btn { 
             display: flex; 
             align-items: center; 
             gap: 8px; 
-            background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%); 
-            color: var(--accent-deep); 
+            background: #f8fafc; 
+            color: var(--text-secondary); 
             padding: 8px 16px; 
             border-radius: 30px; 
             font-size: 12px; 
             font-weight: 800; 
-            border: 1px solid #93c5fd; 
+            border: 1px solid #cbd5e1; 
+            cursor: pointer;
+            transition: all 0.25s ease;
         }
-        .draft-badge i { color: var(--accent); }
+        .tab-badge-btn:hover {
+            border-color: #93c5fd;
+            color: var(--accent-deep);
+        }
+        .tab-badge-btn.active {
+            background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%); 
+            color: var(--accent-deep); 
+            border: 1.5px solid #3b82f6; 
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+        }
+        .tab-badge-btn.active i { color: var(--accent); }
+        .tab-badge-btn.history-tab.active {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            color: #065f46;
+            border-color: #10b981;
+        }
+        .tab-badge-btn.history-tab.active i { color: #059669; }
 
         .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 52vh; text-align: center; animation: fadeIn 0.8s ease-out; }
         .empty-icon { 
@@ -470,8 +565,12 @@
             height: 4px; 
             background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 50%, #0ea5e9 100%); 
         }
+        .card-decoration.history-bar {
+            background: linear-gradient(90deg, #059669 0%, #10b981 50%, #0ea5e9 100%);
+        }
 
-        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+        .card-header-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
         .card-icon { 
             width: 38px; height: 38px; 
             border-radius: 10px; 
@@ -480,12 +579,36 @@
             border: 1px solid #bfdbfe;
             display: flex; align-items: center; justify-content: center; 
             font-size: 16px; 
+            flex-shrink: 0;
         }
-        .card-title { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 800; color: var(--accent-deep); line-height: 1.3; }
+        .card-icon.history-icon {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            color: #059669;
+            border-color: #a7f3d0;
+        }
+        .card-title { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 800; color: var(--accent-deep); line-height: 1.3; word-break: break-word; }
+        .status-pill-sent {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
         .data-list { display: flex; flex-direction: column; gap: 9px; }
         .data-item { display: flex; flex-direction: column; gap: 3px; }
         .data-label { font-size: 10px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
-        .data-value { font-size: 12px; font-weight: 700; color: #1e293b; padding: 8px 10px; background: var(--value-bg); border-radius: var(--radius-sm); border: 1px solid var(--value-border); }
+        .data-value { font-size: 12px; font-weight: 700; color: #1e293b; padding: 8px 10px; background: var(--value-bg); border-radius: var(--radius-sm); border: 1px solid var(--value-border); word-break: break-word; }
+        .data-value.file-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
 
         .card-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 15px; padding-top: 12px; border-top: 1px dashed #bfdbfe; }
         .action-btn { padding: 6px 13px; border-radius: 20px; font-size: 11px; font-weight: 700; border: none; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; gap: 5px; }
@@ -495,13 +618,13 @@
         .action-delete:hover { background: var(--danger); color: white; }
 
         #toast-container { position: fixed; top: 26px; right: 26px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .custom-toast { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); border-radius: var(--radius-md); box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16); padding: 14px 18px; display: flex; align-items: center; gap: 12px; min-width: 280px; transform: translateX(120%); opacity: 0; animation: slideInRightToast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: all; border-left: 4px solid; }
+        .custom-toast { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); border-radius: var(--radius-md); box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16); padding: 14px 18px; display: flex; align-items: center; gap: 12px; min-width: 280px; max-width: 400px; transform: translateX(120%); opacity: 0; animation: slideInRightToast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; pointer-events: all; border-left: 4px solid; }
         .custom-toast.success { border-left-color: var(--success); } .custom-toast.error { border-left-color: var(--danger); } .custom-toast.warning { border-left-color: var(--accent); }
         .custom-toast.fade-out { animation: fadeOutRightToast 0.4s ease forwards; }
         .toast-icon { font-size: 18px; color: var(--accent); }
         .custom-toast.success .toast-icon { color: var(--success); }
         .custom-toast.error .toast-icon { color: var(--danger); }
-        .toast-text { font-size: 12px; font-weight: 700; color: #1e293b; }
+        .toast-text { font-size: 12px; font-weight: 700; color: #1e293b; line-height: 1.4; }
         @keyframes slideInRightToast { to { transform: translateX(0); opacity: 1; } } @keyframes fadeOutRightToast { to { transform: translateX(120%); opacity: 0; } }
 
         /* TOMBOL BANTUAN MASUK SIMETRIS DI DALAM FRAME WORKSPACE */
@@ -538,14 +661,14 @@
             background: linear-gradient(135deg, #172554 0%, #1d4ed8 55%, #0284c7 100%); 
         }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(2, 6, 23, 0.65); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(6px); opacity: 0; transition: opacity 0.3s ease; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(2, 6, 23, 0.65); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(6px); opacity: 0; transition: opacity 0.3s ease; padding: 16px; }
         .modal-overlay.show { display: flex !important; opacity: 1; }
-        .modal-box { background: white; border-radius: var(--radius-lg); width: 390px; padding: 26px; border: 1px solid #dbeafe; box-shadow: 0 24px 55px rgba(2, 6, 23, 0.35); transform: scale(0.85); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .modal-box { background: white; border-radius: var(--radius-lg); width: 390px; max-width: 100%; padding: 26px; border: 1px solid #dbeafe; box-shadow: 0 24px 55px rgba(2, 6, 23, 0.35); transform: scale(0.85); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .modal-overlay.show .modal-box { transform: scale(1); opacity: 1; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #e0f2fe; padding-bottom: 12px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #e0f2fe; padding-bottom: 12px; gap: 10px; }
         .modal-header h3 { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 800; color: var(--accent-deep); display: flex; align-items: center; gap: 9px; }
         .modal-header h3 i { color: var(--accent); }
-        .close-modal { background: #eff6ff; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 15px; color: var(--accent-deep); cursor: pointer; transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; }
+        .close-modal { background: #eff6ff; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 15px; color: var(--accent-deep); cursor: pointer; transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .close-modal:hover { background: #fee2e2; color: var(--danger); transform: rotate(90deg) scale(1.1); }
         .modal-body { display: flex; flex-direction: column; gap: 10px; }
         .contact-item { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--value-bg); border: 1px solid var(--value-border); border-radius: var(--radius-md); transition: all 0.3s ease; text-decoration: none; color: var(--text-primary); }
@@ -554,6 +677,29 @@
         .icon-wa { background: linear-gradient(135deg, #16a34a, #22c55e); box-shadow: 0 6px 14px rgba(34, 197, 94, 0.25); }
         .contact-text h4 { font-size: 13.5px; font-weight: 800; color: var(--accent-deep); margin-bottom: 2px; }
         .contact-text p { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); }
+
+        /* Modal Preview PDF */
+        .pdf-modal-box {
+            width: 860px;
+            max-width: 95vw;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .pdf-frame-container {
+            flex: 1;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            position: relative;
+        }
+        .pdf-frame-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
 
         .confirm-actions { display: flex; gap: 10px; margin-top: 22px; }
         .confirm-actions button { flex: 1; padding: 10px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; }
@@ -597,6 +743,11 @@
             </div>
 
             <div class="sidebar-content">
+                <div class="edit-mode-banner" id="edit-mode-banner">
+                    <span><i class="fas fa-pen"></i> Mode Edit Draft</span>
+                    <button type="button" onclick="batalEditDraft()" style="background:#92400e; color:#fff; border:none; border-radius:6px; padding:3px 8px; font-size:10px; font-weight:800; cursor:pointer;">Batal</button>
+                </div>
+
                 <div class="input-group">
                     <label class="form-label">SPPG</label>
                     <input type="text" id="input-sppg" class="custom-input" placeholder="Masukkan Nama SPPG...">
@@ -628,18 +779,18 @@
 
                 <div class="input-group">
                     <label class="form-label">Jumlah Pegawai</label>
-                    <input type="number" id="input-pegawai" class="custom-input" placeholder="Contoh: 15">
+                    <input type="number" id="input-pegawai" class="custom-input" min="0" step="1" placeholder="Contoh: 15" oninput="sanitizeNumberInput(this)">
                 </div>
 
                 <div class="input-group">
                     <label class="form-label">Jumlah Penerima Manfaat / Sekolah</label>
-                    <input type="number" id="input-penerima" class="custom-input" placeholder="Contoh: 450">
+                    <input type="number" id="input-penerima" class="custom-input" min="0" step="1" placeholder="Contoh: 450" oninput="sanitizeNumberInput(this)">
                 </div>
 
                 <div class="input-group">
                     <label class="form-label">Evident Lokasi (Wajib PDF, Maks. 2MB)</label>
                     <input type="file" id="input-evident" class="custom-input" accept="application/pdf,.pdf" style="padding: 7px; font-size: 11px;" onchange="validatePdfFile(this)">
-                    <div id="preview-evident-pdf" style="display: none; align-items: center; gap: 6px; padding: 7px 10px; background: #eff6ff; border-radius: 8px; border: 1.5px solid #93c5fd; margin-top: 5px; font-size: 11px; font-weight: 700; color: #1e3a8a; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.1); word-break: break-all;"></div>
+                    <div id="preview-evident-pdf" class="pdf-preview-chip"></div>
                 </div>
             </div>
             
@@ -647,14 +798,14 @@
                 <button class="btn btn-reset ripple-btn" onclick="bersihkanFormInputKonfirmasi()">
                     <span><i class="fas fa-undo"></i> Reset</span>
                 </button>
-                <button class="btn btn-save ripple-btn" onclick="simpanKePreview()">
+                <button class="btn btn-save ripple-btn" id="btn-save-draft" onclick="simpanKePreview()">
                     <span><i class="fas fa-check"></i> Simpan Draft</span>
                 </button>
             </div>
         </div>
 
         <!-- MAIN WORKSPACE -->
-        <div class="main-workspace">
+        <div class="main-workspace" id="main-workspace">
             <!-- LAYER LATAR EMBOSS GRADASI -->
             <div class="workspace-emboss-layer">
                 <img src="bg-bandung.jpg" alt="Latar Emboss Bandung" class="emboss-bg-img" onerror="this.onerror=null; this.src='logo-bagtapem.png'; this.classList.add('fallback-logo');">
@@ -670,23 +821,22 @@
                         <span><i class="fas fa-compress-arrows-alt"></i> Minimize</span>
                     </button>
                 </div>
-                <button class="btn-submit ripple-btn" onclick="submitKeSupabase()">
+                <button class="btn-submit ripple-btn" id="btn-submit-supabase" onclick="submitKeSupabase()">
                     <span><i class="fas fa-cloud-upload-alt"></i> SUBMIT DATA</span>
                 </button>
             </div>
 
-            <div class="workspace-empty-watermark" id="empty-watermark">
-                <i class="fas fa-desktop"></i>
-                <h2></h2>
-                <p style="font-size: 13px; font-weight: 600; color: #475569;"></p>
-            </div>
-
             <div class="workspace-content">
                 <div class="workspace-toolbar">
-                    <div class="draft-badge" id="draft-counter">
-                        <i class="fas fa-inbox"></i> 0 Draft Tersimpan
+                    <div class="toolbar-tabs">
+                        <button type="button" class="tab-badge-btn active" id="tab-draft-btn" onclick="switchWorkspaceTab('draft')">
+                            <i class="fas fa-inbox"></i> <span id="draft-counter-text">0 Draft SPPG Tersimpan</span>
+                        </button>
+                        <button type="button" class="tab-badge-btn history-tab" id="tab-history-btn" onclick="switchWorkspaceTab('history')">
+                            <i class="fas fa-history"></i> <span id="history-counter-text">0 Riwayat Terkirim</span>
+                        </button>
                     </div>
-                    <span style="font-size: 11.5px; color: #1e3a8a; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    <span id="toolbar-helper-text" style="font-size: 11.5px; color: #1e3a8a; font-weight: 700; display: flex; align-items: center; gap: 6px;">
                         <i class="fas fa-shield-alt" style="color: #0ea5e9;"></i> Klik Tombol Submit Data Setelah Melakukan INPUT (draft).
                     </span>
                 </div>
@@ -720,10 +870,28 @@
                 <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5; font-weight: 500;">
                     Mengalami kendala saat menginput data SPPG? Silakan hubungi tim kami:
                 </p>
-                <a href="https://wa.me/6287896371543" target="_blank" class="contact-item">
+                <a href="https://wa.me/6287825666617" target="_blank" rel="noopener noreferrer" class="contact-item">
                     <div class="contact-icon icon-wa"><i class="fab fa-whatsapp"></i></div>
                     <div class="contact-text"><h4>Febri (WhatsApp)</h4><p>+62 878-2566-6617</p></div>
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PRATINJAU PDF -->
+    <div id="pdfPreviewModal" class="modal-overlay">
+        <div class="modal-box pdf-modal-box">
+            <div class="modal-header">
+                <h3 id="pdf-modal-title"><i class="fas fa-file-pdf" style="color: #ef4444;"></i> Pratinjau Evident PDF</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <a id="pdf-open-newtab" href="#" target="_blank" rel="noopener noreferrer" class="action-btn action-edit" style="text-decoration: none;">
+                        <i class="fas fa-external-link-alt"></i> Buka di Tab Baru
+                    </a>
+                    <button class="close-modal" onclick="closePdfModal()"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="pdf-frame-container">
+                <iframe id="pdf-preview-iframe" title="Pratinjau Dokumen PDF"></iframe>
             </div>
         </div>
     </div>
@@ -783,9 +951,98 @@
         };
 
         let masterDraftStore = [];
+        let submittedHistoryStore = [];
         let temporaryFileObj = null;
+        let editingDraftIndex = null;
+        let activeWorkspaceTab = 'draft';
+        let activePdfObjectUrl = null;
         const MAX_PDF_SIZE = 2 * 1024 * 1024; // 2 MB
+        const HISTORY_STORAGE_KEY = 'sppg_bandung_submitted_history_v1';
 
+        // ==========================================
+        // KEAMANAN: SANITASI XSS
+        // ==========================================
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // ==========================================
+        // PENYIMPANAN PERSISTEN (INDEXEDDB + LOCALSTORAGE)
+        // ==========================================
+        const DraftStorage = {
+            dbName: 'SPPG_Bandung_DraftDB',
+            storeName: 'drafts',
+            open() {
+                return new Promise((resolve, reject) => {
+                    if (!window.indexedDB) return reject(new Error('IndexedDB tidak didukung'));
+                    const req = indexedDB.open(this.dbName, 1);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            db.createObjectStore(this.storeName, { keyPath: 'id' });
+                        }
+                    };
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
+                });
+            },
+            async saveAll(drafts) {
+                try {
+                    const db = await this.open();
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction(this.storeName, 'readwrite');
+                        const store = tx.objectStore(this.storeName);
+                        store.clear();
+                        drafts.forEach(item => store.put(item));
+                        tx.oncomplete = () => resolve(true);
+                        tx.onerror = () => reject(tx.error);
+                    });
+                } catch (err) {
+                    console.warn('Penyimpanan draft lokal dilewati:', err);
+                }
+            },
+            async loadAll() {
+                try {
+                    const db = await this.open();
+                    return new Promise((resolve, reject) => {
+                        const tx = db.transaction(this.storeName, 'readonly');
+                        const store = tx.objectStore(this.storeName);
+                        const req = store.getAll();
+                        req.onsuccess = () => resolve(req.result || []);
+                        req.onerror = () => reject(req.error);
+                    });
+                } catch (err) {
+                    console.warn('Gagal memuat draft dari IndexedDB:', err);
+                    return [];
+                }
+            }
+        };
+
+        function loadHistoryFromStorage() {
+            try {
+                const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+                submittedHistoryStore = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(submittedHistoryStore)) submittedHistoryStore = [];
+            } catch (e) {
+                submittedHistoryStore = [];
+            }
+        }
+
+        function saveHistoryToStorage() {
+            try {
+                localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(submittedHistoryStore));
+            } catch (e) {
+                console.warn('Gagal menyimpan riwayat ke localStorage:', e);
+            }
+        }
+
+        // Inisialisasi Dropdown Kecamatan
         const kecDropdown = document.getElementById('input-kecamatan');
         Object.keys(wilayahBandung).sort().forEach(kec => {
             const opt = document.createElement('option');
@@ -806,14 +1063,21 @@
             }
         }
 
+        // Validasi input angka agar tidak negatif / desimal / karakter aneh
+        function sanitizeNumberInput(el) {
+            if (el.value === '') return;
+            const cleaned = el.value.replace(/[^0-9]/g, '');
+            el.value = cleaned;
+        }
+
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `custom-toast ${type}`;
             let iconClass = type === 'error' ? 'fa-times-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-check-circle';
-            toast.innerHTML = `<div class="toast-icon"><i class="fas ${iconClass}"></i></div><div class="toast-text">${message}</div>`;
+            toast.innerHTML = `<div class="toast-icon"><i class="fas ${iconClass}"></i></div><div class="toast-text">${escapeHTML(message)}</div>`;
             container.appendChild(toast);
-            setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 400); }, 3500);
+            setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 400); }, 3800);
         }
 
         let currentConfirmAction = null;
@@ -839,8 +1103,28 @@
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('mobile-overlay').classList.toggle('show'); }
 
-        function validatePdfFile(input) {
+        function renderSidebarPdfPreview(file, isExistingDraftFile = false) {
             const preview = document.getElementById('preview-evident-pdf');
+            if (!file) {
+                preview.style.display = 'none';
+                preview.innerHTML = '';
+                return;
+            }
+            const sizeText = file.size >= 1024 * 1024 
+                ? `${(file.size / (1024 * 1024)).toFixed(2)} MB` 
+                : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+            const noteText = isExistingDraftFile ? ' • Tersimpan' : '';
+            preview.innerHTML = `
+                <div style="display:flex; align-items:center; gap:6px; min-width:0;">
+                    <i class="fas fa-file-pdf" style="color: #ef4444; font-size: 14px; flex-shrink: 0;"></i>
+                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHTML(file.name)}">${escapeHTML(file.name)} <span style="color: #0284c7; font-weight: 600;">(${sizeText}${noteText})</span></span>
+                </div>
+                <button type="button" class="btn-mini-preview" onclick="previewTemporaryPdf()"><i class="fas fa-eye"></i> Lihat</button>
+            `;
+            preview.style.display = 'flex';
+        }
+
+        function validatePdfFile(input) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
@@ -848,8 +1132,16 @@
                 if (!isPdf) {
                     showToast("Format file ditolak! Evident Lokasi wajib berformat PDF (.pdf).", "error");
                     input.value = '';
-                    preview.style.display = 'none';
-                    temporaryFileObj = null;
+                    if (editingDraftIndex === null) {
+                        temporaryFileObj = null;
+                        renderSidebarPdfPreview(null);
+                    }
+                    return;
+                }
+
+                if (file.size <= 0) {
+                    showToast("File PDF kosong (0 KB)! Silakan unggah dokumen PDF yang valid.", "error");
+                    input.value = '';
                     return;
                 }
 
@@ -857,21 +1149,32 @@
                     const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
                     showToast(`Ukuran file terlalu besar (${sizeMB} MB)! Maksimal ukuran PDF adalah 2 MB.`, "error");
                     input.value = '';
-                    preview.style.display = 'none';
-                    temporaryFileObj = null;
+                    if (editingDraftIndex === null) {
+                        temporaryFileObj = null;
+                        renderSidebarPdfPreview(null);
+                    }
                     return;
                 }
 
                 temporaryFileObj = file;
-                const sizeText = file.size >= 1024 * 1024 
-                    ? `${(file.size / (1024 * 1024)).toFixed(2)} MB` 
-                    : `${Math.max(1, Math.round(file.size / 1024))} KB`;
-
-                preview.innerHTML = `<i class="fas fa-file-pdf" style="color: #ef4444; font-size: 14px; flex-shrink: 0;"></i> <span>${file.name} <span style="color: #0284c7; font-weight: 600;">(${sizeText})</span></span>`;
-                preview.style.display = 'flex';
-            } else {
-                preview.style.display = 'none';
+                renderSidebarPdfPreview(file, false);
+            } else if (editingDraftIndex === null) {
                 temporaryFileObj = null;
+                renderSidebarPdfPreview(null);
+            }
+        }
+
+        function setEditModeUI(isEditing) {
+            const banner = document.getElementById('edit-mode-banner');
+            const saveBtn = document.getElementById('btn-save-draft');
+            if (isEditing) {
+                banner.classList.add('show');
+                saveBtn.classList.add('editing-state');
+                saveBtn.innerHTML = '<span><i class="fas fa-save"></i> Update Draft</span>';
+            } else {
+                banner.classList.remove('show');
+                saveBtn.classList.remove('editing-state');
+                saveBtn.innerHTML = '<span><i class="fas fa-check"></i> Simpan Draft</span>';
             }
         }
 
@@ -884,8 +1187,15 @@
             document.getElementById('input-pegawai').value = '';
             document.getElementById('input-penerima').value = '';
             document.getElementById('input-evident').value = '';
-            document.getElementById('preview-evident-pdf').style.display = 'none';
+            renderSidebarPdfPreview(null);
             temporaryFileObj = null;
+            editingDraftIndex = null;
+            setEditModeUI(false);
+        }
+
+        function batalEditDraft() {
+            clearInputFormOnly();
+            showToast("Mode edit dibatalkan.", "warning");
         }
 
         function bersihkanFormInputKonfirmasi() { 
@@ -895,73 +1205,280 @@
             }); 
         }
 
-        function simpanKePreview() {
+        async function simpanKePreview() {
             const sppg = document.getElementById('input-sppg').value.trim();
             const kecamatan = document.getElementById('input-kecamatan').value;
             const kelurahan = document.getElementById('input-kelurahan').value;
             const alamat = document.getElementById('input-alamat').value.trim();
             const kepala = document.getElementById('input-kepala').value.trim();
-            const pegawai = document.getElementById('input-pegawai').value;
-            const penerima = document.getElementById('input-penerima').value;
+            const pegawaiRaw = document.getElementById('input-pegawai').value.trim();
+            const penerimaRaw = document.getElementById('input-penerima').value.trim();
 
-            if(!sppg || !kecamatan || !kelurahan) {
-                showToast("Nama SPPG, Kecamatan, dan Kelurahan wajib diisi!", "warning");
+            if (!sppg) {
+                showToast("Nama SPPG wajib diisi!", "warning");
+                document.getElementById('input-sppg').focus();
                 return;
             }
-
-            if(!temporaryFileObj) {
+            if (!kecamatan) {
+                showToast("Kecamatan wajib dipilih!", "warning");
+                document.getElementById('input-kecamatan').focus();
+                return;
+            }
+            if (!kelurahan) {
+                showToast("Kelurahan wajib dipilih!", "warning");
+                document.getElementById('input-kelurahan').focus();
+                return;
+            }
+            if (!alamat) {
+                showToast("Alamat lengkap SPPG wajib diisi!", "warning");
+                document.getElementById('input-alamat').focus();
+                return;
+            }
+            if (!kepala) {
+                showToast("Nama Kepala SPPG wajib diisi!", "warning");
+                document.getElementById('input-kepala').focus();
+                return;
+            }
+            if (pegawaiRaw === '' || isNaN(Number(pegawaiRaw)) || Number(pegawaiRaw) < 0) {
+                showToast("Jumlah Pegawai wajib diisi dengan angka minimal 0!", "warning");
+                document.getElementById('input-pegawai').focus();
+                return;
+            }
+            if (penerimaRaw === '' || isNaN(Number(penerimaRaw)) || Number(penerimaRaw) < 0) {
+                showToast("Jumlah Penerima Manfaat / Sekolah wajib diisi dengan angka minimal 0!", "warning");
+                document.getElementById('input-penerima').focus();
+                return;
+            }
+            if (!temporaryFileObj) {
                 showToast("Evident Lokasi (file PDF maks. 2MB) wajib diunggah!", "warning");
                 return;
             }
 
             const isPdf = temporaryFileObj.type === 'application/pdf' || temporaryFileObj.name.toLowerCase().endsWith('.pdf');
-            if(!isPdf || temporaryFileObj.size > MAX_PDF_SIZE) {
-                showToast("File Evident Lokasi harus berformat PDF dengan ukuran maksimal 2MB!", "error");
+            if (!isPdf || temporaryFileObj.size <= 0 || temporaryFileObj.size > MAX_PDF_SIZE) {
+                showToast("File Evident Lokasi harus berformat PDF valid dengan ukuran maksimal 2MB!", "error");
                 return;
             }
 
-            const newDraft = {
-                id: Date.now(),
-                sppg, kecamatan, kelurahan, alamat, kepala, pegawai, penerima,
-                fileObj: temporaryFileObj
-            };
+            const pegawai = parseInt(pegawaiRaw, 10);
+            const penerima = parseInt(penerimaRaw, 10);
 
-            masterDraftStore.push(newDraft);
-            showToast(`Draft SPPG "${sppg}" berhasil disimpan!`, "success");
+            if (editingDraftIndex !== null && masterDraftStore[editingDraftIndex]) {
+                masterDraftStore[editingDraftIndex] = {
+                    ...masterDraftStore[editingDraftIndex],
+                    sppg,
+                    kecamatan,
+                    kelurahan,
+                    alamat,
+                    kepala,
+                    pegawai,
+                    penerima,
+                    fileObj: temporaryFileObj,
+                    fileName: temporaryFileObj.name
+                };
+                showToast(`Draft SPPG "${sppg}" berhasil diperbarui!`, "success");
+            } else {
+                const newDraft = {
+                    id: Date.now() + Math.floor(Math.random() * 1000),
+                    sppg,
+                    kecamatan,
+                    kelurahan,
+                    alamat,
+                    kepala,
+                    pegawai,
+                    penerima,
+                    fileObj: temporaryFileObj,
+                    fileName: temporaryFileObj.name
+                };
+                masterDraftStore.push(newDraft);
+                showToast(`Draft SPPG "${sppg}" berhasil disimpan!`, "success");
+            }
+
+            await DraftStorage.saveAll(masterDraftStore);
             clearInputFormOnly();
-            renderPreviewData();
-            if(window.innerWidth <= 900) toggleSidebar();
+            activeWorkspaceTab = 'draft';
+            updateTabUI();
+            renderWorkspaceContent();
+            if (window.innerWidth <= 900 && document.getElementById('sidebar').classList.contains('active')) {
+                toggleSidebar();
+            }
         }
 
-        function renderPreviewData() {
-            const previewArea = document.getElementById('preview-area');
-            document.getElementById('draft-counter').innerHTML = `<i class="fas fa-inbox"></i> ${masterDraftStore.length} Draft SPPG Tersimpan`;
+        function editDraft(index) {
+            const item = masterDraftStore[index];
+            if (!item) return;
 
-            if(masterDraftStore.length === 0) {
+            editingDraftIndex = index;
+            setEditModeUI(true);
+
+            document.getElementById('input-sppg').value = item.sppg || '';
+            document.getElementById('input-kecamatan').value = item.kecamatan || '';
+            updateKelurahanDropdown();
+            document.getElementById('input-kelurahan').value = item.kelurahan || '';
+            document.getElementById('input-alamat').value = item.alamat || '';
+            document.getElementById('input-kepala').value = item.kepala || '';
+            document.getElementById('input-pegawai').value = item.pegawai !== undefined ? item.pegawai : '';
+            document.getElementById('input-penerima').value = item.penerima !== undefined ? item.penerima : '';
+            document.getElementById('input-evident').value = '';
+
+            if (item.fileObj) {
+                temporaryFileObj = item.fileObj;
+                renderSidebarPdfPreview(item.fileObj, true);
+            } else {
+                temporaryFileObj = null;
+                renderSidebarPdfPreview(null);
+            }
+
+            if (window.innerWidth <= 900 && !document.getElementById('sidebar').classList.contains('active')) {
+                toggleSidebar();
+            }
+            document.querySelector('.sidebar-content').scrollTo({ top: 0, behavior: 'smooth' });
+            showToast(`Mengedit draft "${item.sppg}". Silakan ubah data lalu klik Update Draft.`, "warning");
+        }
+
+        function switchWorkspaceTab(tabName) {
+            activeWorkspaceTab = tabName;
+            updateTabUI();
+            renderWorkspaceContent();
+        }
+
+        function updateTabUI() {
+            const draftBtn = document.getElementById('tab-draft-btn');
+            const historyBtn = document.getElementById('tab-history-btn');
+            const helperText = document.getElementById('toolbar-helper-text');
+
+            document.getElementById('draft-counter-text').textContent = `${masterDraftStore.length} Draft SPPG Tersimpan`;
+            document.getElementById('history-counter-text').textContent = `${submittedHistoryStore.length} Riwayat Terkirim`;
+
+            if (activeWorkspaceTab === 'draft') {
+                draftBtn.classList.add('active');
+                historyBtn.classList.remove('active');
+                helperText.innerHTML = `<i class="fas fa-shield-alt" style="color: #0ea5e9;"></i> Klik Tombol Submit Data Setelah Melakukan INPUT (draft).`;
+            } else {
+                historyBtn.classList.add('active');
+                draftBtn.classList.remove('active');
+                helperText.innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Daftar data SPPG yang sudah berhasil dikirim ke server.`;
+            }
+        }
+
+        function renderWorkspaceContent() {
+            updateTabUI();
+            const previewArea = document.getElementById('preview-area');
+
+            if (activeWorkspaceTab === 'history') {
+                if (submittedHistoryStore.length === 0) {
+                    previewArea.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon" style="color: #10b981; border-color: #a7f3d0;"><i class="fas fa-clipboard-check"></i></div>
+                            <h3>Belum Ada Riwayat Terkirim</h3>
+                            <p>Data SPPG yang telah berhasil disubmit ke server akan tercatat di sini.</p>
+                        </div>`;
+                    return;
+                }
+
+                let histHtml = `
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:14px;">
+                        <button type="button" class="action-btn action-delete" onclick="hapusRiwayatKonfirmasi()">
+                            <i class="fas fa-trash-alt"></i> Bersihkan Riwayat Lokal
+                        </button>
+                    </div>
+                    <div class="preview-grid">`;
+
+                submittedHistoryStore.forEach((item, index) => {
+                    const safeSppg = escapeHTML(item.sppg);
+                    const safeKecKel = `${escapeHTML(item.kecamatan)} / ${escapeHTML(item.kelurahan)}`;
+                    const safeAlamat = escapeHTML(item.alamat || '-');
+                    const safeKepala = escapeHTML(item.kepala || '-');
+                    const safePegawai = escapeHTML(item.pegawai ?? '0');
+                    const safePenerima = escapeHTML(item.penerima ?? '0');
+                    const safeFileName = escapeHTML(item.fileName || 'Dokumen Evident.pdf');
+                    const safeTime = escapeHTML(item.submittedAt || '-');
+                    const safeUrl = item.publicUrl ? escapeHTML(item.publicUrl) : '';
+
+                    histHtml += `
+                        <div class="data-card" style="animation-delay: ${index * 0.06}s">
+                            <div class="card-decoration history-bar"></div>
+                            <div class="card-header">
+                                <div class="card-header-left">
+                                    <div class="card-icon history-icon"><i class="fas fa-check-double"></i></div>
+                                    <div>
+                                        <div class="card-title">${safeSppg}</div>
+                                        <div style="font-size: 10.5px; color: #64748b; font-weight: 600; margin-top: 2px;">
+                                            <i class="far fa-clock"></i> ${safeTime}
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="status-pill-sent">Terkirim</span>
+                            </div>
+                            <div class="data-list">
+                                <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
+                                <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
+                                <div class="data-item"><span class="data-label">Kepala SPPG</span><span class="data-value">${safeKepala}</span></div>
+                                <div class="data-item"><span class="data-label">Jumlah Pegawai</span><span class="data-value">${safePegawai} Orang</span></div>
+                                <div class="data-item"><span class="data-label">Penerima Manfaat / Sekolah</span><span class="data-value">${safePenerima} Target</span></div>
+                                <div class="data-item">
+                                    <span class="data-label">Evident Lokasi</span>
+                                    <div class="data-value file-row">
+                                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                            <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileName}
+                                        </span>
+                                        ${safeUrl ? `<button type="button" class="btn-mini-preview" onclick="previewHistoryPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                histHtml += `</div>`;
+                previewArea.innerHTML = histHtml;
+                return;
+            }
+
+            // TAB DRAFT
+            if (masterDraftStore.length === 0) {
                 previewArea.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3>Ruang Kerja Kosong</h3><p>Silakan isi data SPPG dan KMP di panel sebelah kiri lalu klik "Simpan Draft".</p></div>`;
                 return;
             }
 
             let html = `<div class="preview-grid">`;
             masterDraftStore.forEach((item, index) => {
-                let fileStatus = item.fileObj ? item.fileObj.name : 'Tidak ada file';
+                const safeSppg = escapeHTML(item.sppg);
+                const safeKecKel = `${escapeHTML(item.kecamatan)} / ${escapeHTML(item.kelurahan)}`;
+                const safeAlamat = escapeHTML(item.alamat || '-');
+                const safeKepala = escapeHTML(item.kepala || '-');
+                const safePegawai = escapeHTML(item.pegawai ?? '0');
+                const safePenerima = escapeHTML(item.penerima ?? '0');
+                const fileNameRaw = item.fileObj ? item.fileObj.name : (item.fileName || 'Tidak ada file');
+                const safeFileStatus = escapeHTML(fileNameRaw);
+
                 html += `
                     <div class="data-card" style="animation-delay: ${index * 0.08}s">
                         <div class="card-decoration"></div>
                         <div class="card-header">
-                            <div class="card-icon"><i class="fas fa-building"></i></div>
-                            <div class="card-title">${item.sppg}</div>
+                            <div class="card-header-left">
+                                <div class="card-icon"><i class="fas fa-building"></i></div>
+                                <div class="card-title">${safeSppg}</div>
+                            </div>
                         </div>
                         <div class="data-list">
-                            <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${item.kecamatan} / ${item.kelurahan}</span></div>
-                            <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${item.alamat || '-'}</span></div>
-                            <div class="data-item"><span class="data-label">Kepala SPPG</span><span class="data-value">${item.kepala || '-'}</span></div>
-                            <div class="data-item"><span class="data-label">Jumlah Pegawai</span><span class="data-value">${item.pegawai || '0'} Orang</span></div>
-                            <div class="data-item"><span class="data-label">Penerima Manfaat / Sekolah</span><span class="data-value">${item.penerima || '0'} Target</span></div>
-                            <div class="data-item"><span class="data-label">Evident Lokasi</span><span class="data-value"><i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${fileStatus}</span></div>
+                            <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
+                            <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
+                            <div class="data-item"><span class="data-label">Kepala SPPG</span><span class="data-value">${safeKepala}</span></div>
+                            <div class="data-item"><span class="data-label">Jumlah Pegawai</span><span class="data-value">${safePegawai} Orang</span></div>
+                            <div class="data-item"><span class="data-label">Penerima Manfaat / Sekolah</span><span class="data-value">${safePenerima} Target</span></div>
+                            <div class="data-item">
+                                <span class="data-label">Evident Lokasi</span>
+                                <div class="data-value file-row">
+                                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${safeFileStatus}">
+                                        <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileStatus}
+                                    </span>
+                                    ${item.fileObj ? `<button type="button" class="btn-mini-preview" onclick="previewDraftPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
+                                </div>
+                            </div>
                         </div>
                         <div class="card-actions">
-                            <button class="action-btn action-delete" onclick="hapusDraft(${index})"><i class="fas fa-trash"></i> Hapus</button>
+                            <button type="button" class="action-btn action-edit" onclick="editDraft(${index})"><i class="fas fa-edit"></i> Edit</button>
+                            <button type="button" class="action-btn action-delete" onclick="hapusDraft(${index})"><i class="fas fa-trash"></i> Hapus</button>
                         </div>
                     </div>
                 `;
@@ -971,11 +1488,82 @@
         }
 
         function hapusDraft(index) {
-            showConfirm("Hapus Draft SPPG", "Apakah Anda yakin ingin menghapus draft ini?", true, () => {
+            showConfirm("Hapus Draft SPPG", "Apakah Anda yakin ingin menghapus draft ini?", true, async () => {
+                if (editingDraftIndex === index) {
+                    clearInputFormOnly();
+                } else if (editingDraftIndex !== null && editingDraftIndex > index) {
+                    editingDraftIndex -= 1;
+                }
                 masterDraftStore.splice(index, 1);
-                renderPreviewData();
+                await DraftStorage.saveAll(masterDraftStore);
+                renderWorkspaceContent();
                 showToast("Draft berhasil dihapus.", "success");
             });
+        }
+
+        function hapusRiwayatKonfirmasi() {
+            showConfirm("Bersihkan Riwayat Lokal", "Hapus daftar riwayat terkirim dari tampilan browser ini? (Data di server tidak terhapus)", true, () => {
+                submittedHistoryStore = [];
+                saveHistoryToStorage();
+                renderWorkspaceContent();
+                showToast("Riwayat lokal telah dibersihkan.", "success");
+            });
+        }
+
+        // ==========================================
+        // PRATINJAU PDF (BLOB & URL SUPABASE)
+        // ==========================================
+        function openPdfModalWithSource(srcUrl, titleText) {
+            const modal = document.getElementById('pdfPreviewModal');
+            const iframe = document.getElementById('pdf-preview-iframe');
+            const titleEl = document.getElementById('pdf-modal-title');
+            const newTabLink = document.getElementById('pdf-open-newtab');
+
+            titleEl.innerHTML = `<i class="fas fa-file-pdf" style="color: #ef4444;"></i> ${escapeHTML(titleText)}`;
+            iframe.src = srcUrl;
+            newTabLink.href = srcUrl;
+            modal.classList.add('show');
+        }
+
+        function previewTemporaryPdf() {
+            if (!temporaryFileObj) {
+                showToast("Tidak ada file PDF untuk dipratinjau.", "warning");
+                return;
+            }
+            if (activePdfObjectUrl) URL.revokeObjectURL(activePdfObjectUrl);
+            activePdfObjectUrl = URL.createObjectURL(temporaryFileObj);
+            openPdfModalWithSource(activePdfObjectUrl, temporaryFileObj.name);
+        }
+
+        function previewDraftPdf(index) {
+            const item = masterDraftStore[index];
+            if (!item || !item.fileObj) {
+                showToast("File PDF tidak ditemukan pada draft ini. Silakan edit dan unggah ulang.", "error");
+                return;
+            }
+            if (activePdfObjectUrl) URL.revokeObjectURL(activePdfObjectUrl);
+            activePdfObjectUrl = URL.createObjectURL(item.fileObj);
+            openPdfModalWithSource(activePdfObjectUrl, `${item.sppg} - ${item.fileObj.name}`);
+        }
+
+        function previewHistoryPdf(index) {
+            const item = submittedHistoryStore[index];
+            if (!item || !item.publicUrl) {
+                showToast("Tautan file PDF tidak tersedia.", "warning");
+                return;
+            }
+            openPdfModalWithSource(item.publicUrl, `${item.sppg} - ${item.fileName || 'Evident.pdf'}`);
+        }
+
+        function closePdfModal() {
+            const modal = document.getElementById('pdfPreviewModal');
+            const iframe = document.getElementById('pdf-preview-iframe');
+            modal.classList.remove('show');
+            iframe.src = 'about:blank';
+            if (activePdfObjectUrl) {
+                URL.revokeObjectURL(activePdfObjectUrl);
+                activePdfObjectUrl = null;
+            }
         }
 
         function fireConfetti() { 
@@ -991,38 +1579,66 @@
             }, 250); 
         }
 
+        function formatTimestampID() {
+            return new Intl.DateTimeFormat('id-ID', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            }).format(new Date()) + ' WIB';
+        }
+
+        // ==========================================
+        // SUBMIT KE SUPABASE (ANTI-DUPLIKASI PARTIAL UPLOAD)
+        // ==========================================
         async function submitKeSupabase() {
-            if(masterDraftStore.length === 0) {
+            if (masterDraftStore.length === 0) {
                 showToast("Belum ada data draft SPPG untuk disubmit.", "warning");
                 return;
             }
 
-            showConfirm("Submit ke ADMIN", `Anda akan mengirim data ${masterDraftStore.length} SPPG ke ADMIN. Lanjutkan?`, false, async () => {
-                const btn = document.querySelector('.btn-submit'); 
+            if (editingDraftIndex !== null) {
+                showToast("Selesaikan atau batalkan mode Edit Draft terlebih dahulu sebelum submit.", "warning");
+                return;
+            }
+
+            const totalAwal = masterDraftStore.length;
+
+            showConfirm("Submit ke ADMIN", `Anda akan mengirim data ${totalAwal} SPPG ke ADMIN. Lanjutkan?`, false, async () => {
+                const btn = document.getElementById('btn-submit-supabase'); 
                 const originalHtml = btn.innerHTML; 
-                btn.innerHTML = `<span><i class="fas fa-spinner fa-spin"></i> Upload...</span>`; 
+                btn.disabled = true;
                 btn.style.pointerEvents = 'none';
 
-                try {
-                    for (let item of masterDraftStore) {
-                        let publicUrl = null;
+                let successCount = 0;
 
-                        if (item.fileObj) {
-                            const fileExt = item.fileObj.name.split('.').pop();
-                            const fileName = `sppg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+                while (masterDraftStore.length > 0) {
+                    const item = masterDraftStore[0];
+                    btn.innerHTML = `<span><i class="fas fa-spinner fa-spin"></i> Upload (${successCount + 1}/${totalAwal})...</span>`;
 
-                            const { error: uploadError } = await supabaseClient.storage
-                                .from('evident_sppg')
-                                .upload(fileName, item.fileObj);
+                    let uploadedFileName = null;
+                    let publicUrl = null;
 
-                            if (uploadError) throw uploadError;
-
-                            const { data: urlData } = supabaseClient.storage
-                                .from('evident_sppg')
-                                .getPublicUrl(fileName);
-
-                            publicUrl = urlData.publicUrl;
+                    try {
+                        if (!item.fileObj) {
+                            throw new Error(`File Evident PDF untuk "${item.sppg}" tidak valid. Silakan edit draft.`);
                         }
+
+                        const rawExt = (item.fileObj.name.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '') || 'pdf';
+                        uploadedFileName = `sppg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${rawExt}`;
+
+                        const { error: uploadError } = await supabaseClient.storage
+                            .from('evident_sppg')
+                            .upload(uploadedFileName, item.fileObj, {
+                                contentType: 'application/pdf',
+                                upsert: false
+                            });
+
+                        if (uploadError) throw uploadError;
+
+                        const { data: urlData } = supabaseClient.storage
+                            .from('evident_sppg')
+                            .getPublicUrl(uploadedFileName);
+
+                        publicUrl = urlData.publicUrl;
 
                         const { error: insertError } = await supabaseClient
                             .from('data_sppg')
@@ -1033,27 +1649,63 @@
                                     kelurahan: item.kelurahan,
                                     alamat: item.alamat,
                                     kepala_sppg: item.kepala,
-                                    jumlah_pegawai: parseInt(item.pegawai) || 0,
-                                    jumlah_penerima: parseInt(item.penerima) || 0,
+                                    jumlah_pegawai: parseInt(item.pegawai, 10) || 0,
+                                    jumlah_penerima: parseInt(item.penerima, 10) || 0,
                                     evident_lokasi: publicUrl
                                 }
                             ]);
 
-                        if (insertError) throw insertError;
-                    }
+                        if (insertError) {
+                            // Rollback file PDF di storage jika insert database gagal agar tidak jadi file yatim
+                            if (uploadedFileName) {
+                                await supabaseClient.storage.from('evident_sppg').remove([uploadedFileName]).catch(() => {});
+                            }
+                            throw insertError;
+                        }
 
-                    fireConfetti(); 
-                    showToast("SUKSES! Semua data berhasil disubmit.", "success");
-                    masterDraftStore = []; 
-                    clearInputFormOnly(); 
-                    renderPreviewData();
-                } catch (error) { 
-                    showToast("Gagal menyimpan ke Supabase: " + error.message, "error"); 
-                    console.error(error); 
-                } finally { 
-                    btn.innerHTML = originalHtml; 
-                    btn.style.pointerEvents = 'auto'; 
+                        // Sukses per-item: langsung pindahkan ke riwayat & hapus dari draft agar aman dari duplikasi jika item berikutnya gagal
+                        submittedHistoryStore.unshift({
+                            id: item.id,
+                            sppg: item.sppg,
+                            kecamatan: item.kecamatan,
+                            kelurahan: item.kelurahan,
+                            alamat: item.alamat,
+                            kepala: item.kepala,
+                            pegawai: parseInt(item.pegawai, 10) || 0,
+                            penerima: parseInt(item.penerima, 10) || 0,
+                            fileName: item.fileObj.name,
+                            publicUrl: publicUrl,
+                            submittedAt: formatTimestampID()
+                        });
+                        saveHistoryToStorage();
+
+                        masterDraftStore.shift();
+                        await DraftStorage.saveAll(masterDraftStore);
+                        successCount++;
+                        renderWorkspaceContent();
+
+                    } catch (error) {
+                        console.error('Error saat submit item:', item.sppg, error);
+                        if (successCount > 0) {
+                            showToast(`${successCount} data berhasil terkirim, namun gagal pada "${item.sppg}": ${error.message}. Sisa ${masterDraftStore.length} draft aman dan tidak terduplikasi.`, "error");
+                        } else {
+                            showToast(`Gagal mengirim "${item.sppg}" ke Supabase: ${error.message}`, "error");
+                        }
+                        btn.innerHTML = originalHtml;
+                        btn.disabled = false;
+                        btn.style.pointerEvents = 'auto';
+                        return;
+                    }
                 }
+
+                fireConfetti(); 
+                showToast(`SUKSES! Semua ${successCount} data SPPG berhasil disubmit.`, "success");
+                clearInputFormOnly(); 
+                renderWorkspaceContent();
+
+                btn.innerHTML = originalHtml; 
+                btn.disabled = false;
+                btn.style.pointerEvents = 'auto'; 
             });
         }
 
@@ -1063,16 +1715,16 @@
         let isWorkspaceVisible = true;
         function toggleFullWorkspace() {
             const content = document.querySelector('.workspace-content');
-            const watermark = document.getElementById('empty-watermark');
+            const workspace = document.getElementById('main-workspace');
             const btn = document.getElementById('toggle-workspace-btn');
             
             if (isWorkspaceVisible) {
                 content.classList.add('hidden-workspace');
-                watermark.classList.add('show');
+                workspace.classList.add('minimized-mode');
                 btn.innerHTML = `<span><i class="fas fa-expand-arrows-alt"></i> Maximize</span>`;
             } else {
                 content.classList.remove('hidden-workspace');
-                watermark.classList.remove('show');
+                workspace.classList.remove('minimized-mode');
                 btn.innerHTML = `<span><i class="fas fa-compress-arrows-alt"></i> Minimize</span>`;
             }
             isWorkspaceVisible = !isWorkspaceVisible;
@@ -1093,6 +1745,16 @@
             const existingRipple = btn.querySelector('.ripple');
             if (existingRipple) existingRipple.remove();
             btn.appendChild(circle);
+        });
+
+        // Muat ulang data draft & riwayat otomatis saat halaman dibuka/di-refresh
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadHistoryFromStorage();
+            const savedDrafts = await DraftStorage.loadAll();
+            if (Array.isArray(savedDrafts) && savedDrafts.length > 0) {
+                masterDraftStore = savedDrafts;
+            }
+            renderWorkspaceContent();
         });
     </script>
 </body>
