@@ -572,6 +572,17 @@
             white-space: nowrap;
             flex-shrink: 0;
         }
+        .kat-badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 9px;
+            border-radius: 20px;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .kat-badge.sppg { background: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; }
+        .kat-badge.kmp { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
 
         .data-list { display: flex; flex-direction: column; gap: 9px; }
         .data-item { display: flex; flex-direction: column; gap: 3px; }
@@ -722,8 +733,17 @@
                     <button type="button" onclick="batalEditDraft()" style="background:#92400e; color:#fff; border:none; border-radius:6px; padding:4px 9px; font-size:10.5px; font-weight:700; cursor:pointer;">Batal</button>
                 </div>
 
+                <!-- KATEGORI SPPG / KMP -->
                 <div class="input-group">
-                    <label class="form-label">SPPG</label>
+                    <label class="form-label">Kategori</label>
+                    <select id="input-kategori" class="custom-select" onchange="onKategoriChange()">
+                        <option value="SPPG">SPPG</option>
+                        <option value="KMP">KMP</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label class="form-label" id="label-nama-unit">SPPG</label>
                     <input type="text" id="input-sppg" class="custom-input" placeholder="Masukkan Nama SPPG...">
                 </div>
 
@@ -747,22 +767,34 @@
                 </div>
 
                 <div class="input-group">
-                    <label class="form-label">Kepala SPPG</label>
+                    <label class="form-label" id="label-kepala-unit">Kepala SPPG</label>
                     <input type="text" id="input-kepala" class="custom-input" placeholder="Nama lengkap & gelar...">
                 </div>
 
-                <div class="input-group">
+                <!-- KHUSUS SPPG -->
+                <div class="input-group" id="group-sppg-pegawai">
                     <label class="form-label">Jumlah Pegawai</label>
                     <input type="number" id="input-pegawai" class="custom-input" min="0" step="1" placeholder="Contoh: 15" oninput="sanitizeNumberInput(this)">
                 </div>
 
-                <div class="input-group">
+                <div class="input-group" id="group-sppg-penerima">
                     <label class="form-label">Jumlah Penerima Manfaat / Sekolah</label>
                     <input type="number" id="input-penerima" class="custom-input" min="0" step="1" placeholder="Contoh: 450" oninput="sanitizeNumberInput(this)">
                 </div>
 
+                <!-- KHUSUS KMP -->
+                <div class="input-group" id="group-kmp-sekretaris" style="display:none;">
+                    <label class="form-label">Sekretaris</label>
+                    <input type="text" id="input-sekretaris" class="custom-input" placeholder="Nama lengkap Sekretaris KMP...">
+                </div>
+
+                <div class="input-group" id="group-kmp-bendahara" style="display:none;">
+                    <label class="form-label">Bendahara</label>
+                    <input type="text" id="input-bendahara" class="custom-input" placeholder="Nama lengkap Bendahara KMP...">
+                </div>
+
                 <div class="input-group">
-                    <label class="form-label">Evident Lokasi (Wajib PDF, Maks. 2MB)</label>
+                    <label class="form-label" id="label-evident-file">Evident Lokasi (Wajib PDF, Maks. 2MB)</label>
                     <input type="file" id="input-evident" class="custom-input" accept="application/pdf,.pdf" style="padding: 8px; font-size: 11.5px;" onchange="validatePdfFile(this)">
                     <div id="preview-evident-pdf" class="pdf-preview-chip"></div>
                 </div>
@@ -800,7 +832,7 @@
                 <div class="workspace-toolbar">
                     <div class="toolbar-tabs">
                         <button type="button" class="tab-badge-btn active" id="tab-draft-btn" onclick="switchWorkspaceTab('draft')">
-                            <i class="fas fa-inbox"></i> <span id="draft-counter-text">0 Draft SPPG Tersimpan</span>
+                            <i class="fas fa-inbox"></i> <span id="draft-counter-text">0 Draft Tersimpan</span>
                         </button>
                         <button type="button" class="tab-badge-btn history-tab" id="tab-history-btn" onclick="switchWorkspaceTab('history')">
                             <i class="fas fa-history"></i> <span id="history-counter-text">0 Riwayat Terkirim</span>
@@ -838,7 +870,7 @@
             </div>
             <div class="modal-body">
                 <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.55; font-weight: 500;">
-                    Mengalami kendala saat menginput data SPPG? Silakan hubungi tim kami:
+                    Mengalami kendala saat menginput data SPPG & KMP? Silakan hubungi tim kami:
                 </p>
                 <a href="https://wa.me/6287825666617" target="_blank" rel="noopener noreferrer" class="contact-item">
                     <div class="contact-icon icon-wa"><i class="fab fa-whatsapp"></i></div>
@@ -928,6 +960,30 @@
         let activePdfObjectUrl = null;
         const MAX_PDF_SIZE = 2 * 1024 * 1024; // 2 MB
         const HISTORY_STORAGE_KEY = 'sppg_bandung_submitted_history_v1';
+
+        // ==========================================
+        // TOGGLE KATEGORI SPPG vs KMP
+        // ==========================================
+        function onKategoriChange() {
+            const kat = document.getElementById('input-kategori').value;
+            const isKmp = kat === 'KMP';
+
+            document.getElementById('label-nama-unit').textContent = isKmp ? 'KMP' : 'SPPG';
+            document.getElementById('input-sppg').placeholder = isKmp ? 'Masukkan Nama KMP...' : 'Masukkan Nama SPPG...';
+
+            document.getElementById('label-kepala-unit').textContent = isKmp ? 'Ketua' : 'Kepala SPPG';
+            document.getElementById('input-kepala').placeholder = isKmp ? 'Nama lengkap Ketua...' : 'Nama lengkap & gelar...';
+
+            document.getElementById('group-sppg-pegawai').style.display = isKmp ? 'none' : 'flex';
+            document.getElementById('group-sppg-penerima').style.display = isKmp ? 'none' : 'flex';
+
+            document.getElementById('group-kmp-sekretaris').style.display = isKmp ? 'flex' : 'none';
+            document.getElementById('group-kmp-bendahara').style.display = isKmp ? 'flex' : 'none';
+
+            document.getElementById('label-evident-file').textContent = isKmp
+                ? 'Evident Layout SOTK (Wajib PDF, Maks. 2MB)'
+                : 'Evident Lokasi (Wajib PDF, Maks. 2MB)';
+        }
 
         // ==========================================
         // KEAMANAN: SANITASI XSS
@@ -1100,7 +1156,7 @@
                 const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
                 if (!isPdf) {
-                    showToast("Format file ditolak! Evident Lokasi wajib berformat PDF (.pdf).", "error");
+                    showToast("Format file ditolak! Dokumen Evident wajib berformat PDF (.pdf).", "error");
                     input.value = '';
                     if (editingDraftIndex === null) {
                         temporaryFileObj = null;
@@ -1149,6 +1205,8 @@
         }
 
         function clearInputFormOnly() {
+            document.getElementById('input-kategori').value = 'SPPG';
+            onKategoriChange();
             document.getElementById('input-sppg').value = '';
             document.getElementById('input-kecamatan').value = '';
             document.getElementById('input-kelurahan').innerHTML = '<option value="">-- Pilih Kelurahan Dulu --</option>';
@@ -1156,6 +1214,8 @@
             document.getElementById('input-kepala').value = '';
             document.getElementById('input-pegawai').value = '';
             document.getElementById('input-penerima').value = '';
+            document.getElementById('input-sekretaris').value = '';
+            document.getElementById('input-bendahara').value = '';
             document.getElementById('input-evident').value = '';
             renderSidebarPdfPreview(null);
             temporaryFileObj = null;
@@ -1176,6 +1236,8 @@
         }
 
         async function simpanKePreview() {
+            const kategori = document.getElementById('input-kategori').value || 'SPPG';
+            const isKmp = kategori === 'KMP';
             const sppg = document.getElementById('input-sppg').value.trim();
             const kecamatan = document.getElementById('input-kecamatan').value;
             const kelurahan = document.getElementById('input-kelurahan').value;
@@ -1183,9 +1245,11 @@
             const kepala = document.getElementById('input-kepala').value.trim();
             const pegawaiRaw = document.getElementById('input-pegawai').value.trim();
             const penerimaRaw = document.getElementById('input-penerima').value.trim();
+            const sekretaris = document.getElementById('input-sekretaris').value.trim();
+            const bendahara = document.getElementById('input-bendahara').value.trim();
 
             if (!sppg) {
-                showToast("Nama SPPG wajib diisi!", "warning");
+                showToast(isKmp ? "Nama KMP wajib diisi!" : "Nama SPPG wajib diisi!", "warning");
                 document.getElementById('input-sppg').focus();
                 return;
             }
@@ -1200,42 +1264,58 @@
                 return;
             }
             if (!alamat) {
-                showToast("Alamat lengkap SPPG wajib diisi!", "warning");
+                showToast(isKmp ? "Alamat KMP wajib diisi!" : "Alamat lengkap SPPG wajib diisi!", "warning");
                 document.getElementById('input-alamat').focus();
                 return;
             }
             if (!kepala) {
-                showToast("Nama Kepala SPPG wajib diisi!", "warning");
+                showToast(isKmp ? "Nama Ketua KMP wajib diisi!" : "Nama Kepala SPPG wajib diisi!", "warning");
                 document.getElementById('input-kepala').focus();
                 return;
             }
-            if (pegawaiRaw === '' || isNaN(Number(pegawaiRaw)) || Number(pegawaiRaw) < 0) {
-                showToast("Jumlah Pegawai wajib diisi dengan angka minimal 0!", "warning");
-                document.getElementById('input-pegawai').focus();
-                return;
+
+            if (isKmp) {
+                if (!sekretaris) {
+                    showToast("Nama Sekretaris KMP wajib diisi!", "warning");
+                    document.getElementById('input-sekretaris').focus();
+                    return;
+                }
+                if (!bendahara) {
+                    showToast("Nama Bendahara KMP wajib diisi!", "warning");
+                    document.getElementById('input-bendahara').focus();
+                    return;
+                }
+            } else {
+                if (pegawaiRaw === '' || isNaN(Number(pegawaiRaw)) || Number(pegawaiRaw) < 0) {
+                    showToast("Jumlah Pegawai wajib diisi dengan angka minimal 0!", "warning");
+                    document.getElementById('input-pegawai').focus();
+                    return;
+                }
+                if (penerimaRaw === '' || isNaN(Number(penerimaRaw)) || Number(penerimaRaw) < 0) {
+                    showToast("Jumlah Penerima Manfaat / Sekolah wajib diisi dengan angka minimal 0!", "warning");
+                    document.getElementById('input-penerima').focus();
+                    return;
+                }
             }
-            if (penerimaRaw === '' || isNaN(Number(penerimaRaw)) || Number(penerimaRaw) < 0) {
-                showToast("Jumlah Penerima Manfaat / Sekolah wajib diisi dengan angka minimal 0!", "warning");
-                document.getElementById('input-penerima').focus();
-                return;
-            }
+
             if (!temporaryFileObj) {
-                showToast("Evident Lokasi (file PDF maks. 2MB) wajib diunggah!", "warning");
+                showToast(isKmp ? "Evident Layout SOTK (file PDF maks. 2MB) wajib diunggah!" : "Evident Lokasi (file PDF maks. 2MB) wajib diunggah!", "warning");
                 return;
             }
 
             const isPdf = temporaryFileObj.type === 'application/pdf' || temporaryFileObj.name.toLowerCase().endsWith('.pdf');
             if (!isPdf || temporaryFileObj.size <= 0 || temporaryFileObj.size > MAX_PDF_SIZE) {
-                showToast("File Evident Lokasi harus berformat PDF valid dengan ukuran maksimal 2MB!", "error");
+                showToast("File Evident harus berformat PDF valid dengan ukuran maksimal 2MB!", "error");
                 return;
             }
 
-            const pegawai = parseInt(pegawaiRaw, 10);
-            const penerima = parseInt(penerimaRaw, 10);
+            const pegawai = isKmp ? 0 : parseInt(pegawaiRaw, 10);
+            const penerima = isKmp ? 0 : parseInt(penerimaRaw, 10);
 
             if (editingDraftIndex !== null && masterDraftStore[editingDraftIndex]) {
                 masterDraftStore[editingDraftIndex] = {
                     ...masterDraftStore[editingDraftIndex],
+                    kategori,
                     sppg,
                     kecamatan,
                     kelurahan,
@@ -1243,13 +1323,16 @@
                     kepala,
                     pegawai,
                     penerima,
+                    sekretaris: isKmp ? sekretaris : '',
+                    bendahara: isKmp ? bendahara : '',
                     fileObj: temporaryFileObj,
                     fileName: temporaryFileObj.name
                 };
-                showToast(`Draft SPPG "${sppg}" berhasil diperbarui!`, "success");
+                showToast(`Draft ${kategori} "${sppg}" berhasil diperbarui!`, "success");
             } else {
                 const newDraft = {
                     id: Date.now() + Math.floor(Math.random() * 1000),
+                    kategori,
                     sppg,
                     kecamatan,
                     kelurahan,
@@ -1257,11 +1340,13 @@
                     kepala,
                     pegawai,
                     penerima,
+                    sekretaris: isKmp ? sekretaris : '',
+                    bendahara: isKmp ? bendahara : '',
                     fileObj: temporaryFileObj,
                     fileName: temporaryFileObj.name
                 };
                 masterDraftStore.push(newDraft);
-                showToast(`Draft SPPG "${sppg}" berhasil disimpan!`, "success");
+                showToast(`Draft ${kategori} "${sppg}" berhasil disimpan!`, "success");
             }
 
             await DraftStorage.saveAll(masterDraftStore);
@@ -1281,6 +1366,10 @@
             editingDraftIndex = index;
             setEditModeUI(true);
 
+            const kat = item.kategori || 'SPPG';
+            document.getElementById('input-kategori').value = kat;
+            onKategoriChange();
+
             document.getElementById('input-sppg').value = item.sppg || '';
             document.getElementById('input-kecamatan').value = item.kecamatan || '';
             updateKelurahanDropdown();
@@ -1289,6 +1378,8 @@
             document.getElementById('input-kepala').value = item.kepala || '';
             document.getElementById('input-pegawai').value = item.pegawai !== undefined ? item.pegawai : '';
             document.getElementById('input-penerima').value = item.penerima !== undefined ? item.penerima : '';
+            document.getElementById('input-sekretaris').value = item.sekretaris || '';
+            document.getElementById('input-bendahara').value = item.bendahara || '';
             document.getElementById('input-evident').value = '';
 
             if (item.fileObj) {
@@ -1303,7 +1394,7 @@
                 toggleSidebar();
             }
             document.querySelector('.sidebar-content').scrollTo({ top: 0, behavior: 'smooth' });
-            showToast(`Mengedit draft "${item.sppg}". Silakan ubah data lalu klik Update Draft.`, "warning");
+            showToast(`Mengedit draft ${kat} "${item.sppg}". Silakan ubah data lalu klik Update Draft.`, "warning");
         }
 
         function switchWorkspaceTab(tabName) {
@@ -1317,7 +1408,7 @@
             const historyBtn = document.getElementById('tab-history-btn');
             const helperText = document.getElementById('toolbar-helper-text');
 
-            document.getElementById('draft-counter-text').textContent = `${masterDraftStore.length} Draft SPPG Tersimpan`;
+            document.getElementById('draft-counter-text').textContent = `${masterDraftStore.length} Draft Tersimpan`;
             document.getElementById('history-counter-text').textContent = `${submittedHistoryStore.length} Riwayat Terkirim`;
 
             if (activeWorkspaceTab === 'draft') {
@@ -1327,7 +1418,7 @@
             } else {
                 historyBtn.classList.add('active');
                 draftBtn.classList.remove('active');
-                helperText.innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Daftar data SPPG yang sudah berhasil dikirim ke server.`;
+                helperText.innerHTML = `<i class="fas fa-check-circle" style="color: #10b981;"></i> Daftar data SPPG & KMP yang sudah berhasil dikirim ke server.`;
             }
         }
 
@@ -1341,7 +1432,7 @@
                         <div class="empty-state">
                             <div class="empty-icon" style="color: #10b981; border-color: #a7f3d0;"><i class="fas fa-clipboard-check"></i></div>
                             <h3>Belum Ada Riwayat Terkirim</h3>
-                            <p>Data SPPG yang telah berhasil disubmit ke server akan tercatat di sini.</p>
+                            <p>Data SPPG dan KMP yang telah berhasil disubmit ke server akan tercatat di sini.</p>
                         </div>`;
                     return;
                 }
@@ -1355,15 +1446,51 @@
                     <div class="preview-grid">`;
 
                 submittedHistoryStore.forEach((item, index) => {
+                    const kat = (item.kategori || 'SPPG').toUpperCase();
+                    const isKmp = kat === 'KMP';
                     const safeSppg = escapeHTML(item.sppg);
                     const safeKecKel = `${escapeHTML(item.kecamatan)} / ${escapeHTML(item.kelurahan)}`;
                     const safeAlamat = escapeHTML(item.alamat || '-');
                     const safeKepala = escapeHTML(item.kepala || '-');
                     const safePegawai = escapeHTML(item.pegawai ?? '0');
                     const safePenerima = escapeHTML(item.penerima ?? '0');
+                    const safeSekretaris = escapeHTML(item.sekretaris || '-');
+                    const safeBendahara = escapeHTML(item.bendahara || '-');
                     const safeFileName = escapeHTML(item.fileName || 'Dokumen Evident.pdf');
                     const safeTime = escapeHTML(item.submittedAt || '-');
                     const safeUrl = item.publicUrl ? escapeHTML(item.publicUrl) : '';
+
+                    const detailItemsHtml = isKmp ? `
+                        <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
+                        <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
+                        <div class="data-item"><span class="data-label">Ketua</span><span class="data-value">${safeKepala}</span></div>
+                        <div class="data-item"><span class="data-label">Sekretaris</span><span class="data-value">${safeSekretaris}</span></div>
+                        <div class="data-item"><span class="data-label">Bendahara</span><span class="data-value">${safeBendahara}</span></div>
+                        <div class="data-item">
+                            <span class="data-label">Evident Layout SOTK</span>
+                            <div class="data-value file-row">
+                                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                    <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileName}
+                                </span>
+                                ${safeUrl ? `<button type="button" class="btn-mini-preview" onclick="previewHistoryPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
+                        <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
+                        <div class="data-item"><span class="data-label">Kepala SPPG</span><span class="data-value">${safeKepala}</span></div>
+                        <div class="data-item"><span class="data-label">Jumlah Pegawai</span><span class="data-value">${safePegawai} Orang</span></div>
+                        <div class="data-item"><span class="data-label">Penerima Manfaat / Sekolah</span><span class="data-value">${safePenerima} Target</span></div>
+                        <div class="data-item">
+                            <span class="data-label">Evident Lokasi</span>
+                            <div class="data-value file-row">
+                                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                    <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileName}
+                                </span>
+                                ${safeUrl ? `<button type="button" class="btn-mini-preview" onclick="previewHistoryPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
+                            </div>
+                        </div>
+                    `;
 
                     histHtml += `
                         <div class="data-card" style="animation-delay: ${index * 0.05}s">
@@ -1378,23 +1505,13 @@
                                         </div>
                                     </div>
                                 </div>
-                                <span class="status-pill-sent">Terkirim</span>
+                                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                                    <span class="kat-badge ${isKmp ? 'kmp' : 'sppg'}">${kat}</span>
+                                    <span class="status-pill-sent">Terkirim</span>
+                                </div>
                             </div>
                             <div class="data-list">
-                                <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
-                                <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
-                                <div class="data-item"><span class="data-label">Kepala SPPG</span><span class="data-value">${safeKepala}</span></div>
-                                <div class="data-item"><span class="data-label">Jumlah Pegawai</span><span class="data-value">${safePegawai} Orang</span></div>
-                                <div class="data-item"><span class="data-label">Penerima Manfaat / Sekolah</span><span class="data-value">${safePenerima} Target</span></div>
-                                <div class="data-item">
-                                    <span class="data-label">Evident Lokasi</span>
-                                    <div class="data-value file-row">
-                                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                                            <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileName}
-                                        </span>
-                                        ${safeUrl ? `<button type="button" class="btn-mini-preview" onclick="previewHistoryPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
-                                    </div>
-                                </div>
+                                ${detailItemsHtml}
                             </div>
                         </div>
                     `;
@@ -1412,39 +1529,63 @@
 
             let html = `<div class="preview-grid">`;
             masterDraftStore.forEach((item, index) => {
+                const kat = (item.kategori || 'SPPG').toUpperCase();
+                const isKmp = kat === 'KMP';
                 const safeSppg = escapeHTML(item.sppg);
                 const safeKecKel = `${escapeHTML(item.kecamatan)} / ${escapeHTML(item.kelurahan)}`;
                 const safeAlamat = escapeHTML(item.alamat || '-');
                 const safeKepala = escapeHTML(item.kepala || '-');
                 const safePegawai = escapeHTML(item.pegawai ?? '0');
                 const safePenerima = escapeHTML(item.penerima ?? '0');
+                const safeSekretaris = escapeHTML(item.sekretaris || '-');
+                const safeBendahara = escapeHTML(item.bendahara || '-');
                 const fileNameRaw = item.fileObj ? item.fileObj.name : (item.fileName || 'Tidak ada file');
                 const safeFileStatus = escapeHTML(fileNameRaw);
+
+                const draftDetailsHtml = isKmp ? `
+                    <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
+                    <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
+                    <div class="data-item"><span class="data-label">Ketua</span><span class="data-value">${safeKepala}</span></div>
+                    <div class="data-item"><span class="data-label">Sekretaris</span><span class="data-value">${safeSekretaris}</span></div>
+                    <div class="data-item"><span class="data-label">Bendahara</span><span class="data-value">${safeBendahara}</span></div>
+                    <div class="data-item">
+                        <span class="data-label">Evident Layout SOTK</span>
+                        <div class="data-value file-row">
+                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${safeFileStatus}">
+                                <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileStatus}
+                            </span>
+                            ${item.fileObj ? `<button type="button" class="btn-mini-preview" onclick="previewDraftPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
+                        </div>
+                    </div>
+                ` : `
+                    <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
+                    <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
+                    <div class="data-item"><span class="data-label">Kepala SPPG</span><span class="data-value">${safeKepala}</span></div>
+                    <div class="data-item"><span class="data-label">Jumlah Pegawai</span><span class="data-value">${safePegawai} Orang</span></div>
+                    <div class="data-item"><span class="data-label">Penerima Manfaat / Sekolah</span><span class="data-value">${safePenerima} Target</span></div>
+                    <div class="data-item">
+                        <span class="data-label">Evident Lokasi</span>
+                        <div class="data-value file-row">
+                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${safeFileStatus}">
+                                <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileStatus}
+                            </span>
+                            ${item.fileObj ? `<button type="button" class="btn-mini-preview" onclick="previewDraftPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
+                        </div>
+                    </div>
+                `;
 
                 html += `
                     <div class="data-card" style="animation-delay: ${index * 0.06}s">
                         <div class="card-decoration"></div>
                         <div class="card-header">
                             <div class="card-header-left">
-                                <div class="card-icon"><i class="fas fa-building"></i></div>
+                                <div class="card-icon"><i class="fas ${isKmp ? 'fa-users-cog' : 'fa-building'}"></i></div>
                                 <div class="card-title">${safeSppg}</div>
                             </div>
+                            <span class="kat-badge ${isKmp ? 'kmp' : 'sppg'}">${kat}</span>
                         </div>
                         <div class="data-list">
-                            <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
-                            <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
-                            <div class="data-item"><span class="data-label">Kepala SPPG</span><span class="data-value">${safeKepala}</span></div>
-                            <div class="data-item"><span class="data-label">Jumlah Pegawai</span><span class="data-value">${safePegawai} Orang</span></div>
-                            <div class="data-item"><span class="data-label">Penerima Manfaat / Sekolah</span><span class="data-value">${safePenerima} Target</span></div>
-                            <div class="data-item">
-                                <span class="data-label">Evident Lokasi</span>
-                                <div class="data-value file-row">
-                                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${safeFileStatus}">
-                                        <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileStatus}
-                                    </span>
-                                    ${item.fileObj ? `<button type="button" class="btn-mini-preview" onclick="previewDraftPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
-                                </div>
-                            </div>
+                            ${draftDetailsHtml}
                         </div>
                         <div class="card-actions">
                             <button type="button" class="action-btn action-edit" onclick="editDraft(${index})"><i class="fas fa-edit"></i> Edit</button>
@@ -1458,7 +1599,7 @@
         }
 
         function hapusDraft(index) {
-            showConfirm("Hapus Draft SPPG", "Apakah Anda yakin ingin menghapus draft ini?", true, async () => {
+            showConfirm("Hapus Draft", "Apakah Anda yakin ingin menghapus draft ini?", true, async () => {
                 if (editingDraftIndex === index) {
                     clearInputFormOnly();
                 } else if (editingDraftIndex !== null && editingDraftIndex > index) {
@@ -1561,7 +1702,7 @@
         // ==========================================
         async function submitKeSupabase() {
             if (masterDraftStore.length === 0) {
-                showToast("Belum ada data draft SPPG untuk disubmit.", "warning");
+                showToast("Belum ada data draft untuk disubmit.", "warning");
                 return;
             }
 
@@ -1572,7 +1713,7 @@
 
             const totalAwal = masterDraftStore.length;
 
-            showConfirm("Submit ke ADMIN", `Anda akan mengirim data ${totalAwal} SPPG ke ADMIN. Lanjutkan?`, false, async () => {
+            showConfirm("Submit ke ADMIN", `Anda akan mengirim ${totalAwal} data ke ADMIN. Lanjutkan?`, false, async () => {
                 const btn = document.getElementById('btn-submit-supabase'); 
                 const originalHtml = btn.innerHTML; 
                 btn.disabled = true;
@@ -1582,6 +1723,8 @@
 
                 while (masterDraftStore.length > 0) {
                     const item = masterDraftStore[0];
+                    const kat = (item.kategori || 'SPPG').toUpperCase();
+                    const isKmp = kat === 'KMP';
                     btn.innerHTML = `<span><i class="fas fa-spinner fa-spin"></i> Upload (${successCount + 1}/${totalAwal})...</span>`;
 
                     let uploadedFileName = null;
@@ -1593,7 +1736,8 @@
                         }
 
                         const rawExt = (item.fileObj.name.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '') || 'pdf';
-                        uploadedFileName = `sppg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${rawExt}`;
+                        const prefix = isKmp ? 'kmp' : 'sppg';
+                        uploadedFileName = `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${rawExt}`;
 
                         const { error: uploadError } = await supabaseClient.storage
                             .from('evident_sppg')
@@ -1614,13 +1758,16 @@
                             .from('data_sppg')
                             .insert([
                                 {
+                                    kategori: kat,
                                     nama_sppg: item.sppg,
                                     kecamatan: item.kecamatan,
                                     kelurahan: item.kelurahan,
                                     alamat: item.alamat,
                                     kepala_sppg: item.kepala,
-                                    jumlah_pegawai: parseInt(item.pegawai, 10) || 0,
-                                    jumlah_penerima: parseInt(item.penerima, 10) || 0,
+                                    jumlah_pegawai: isKmp ? 0 : (parseInt(item.pegawai, 10) || 0),
+                                    jumlah_penerima: isKmp ? 0 : (parseInt(item.penerima, 10) || 0),
+                                    sekretaris: isKmp ? (item.sekretaris || '') : null,
+                                    bendahara: isKmp ? (item.bendahara || '') : null,
                                     evident_lokasi: publicUrl
                                 }
                             ]);
@@ -1634,13 +1781,16 @@
 
                         submittedHistoryStore.unshift({
                             id: item.id,
+                            kategori: kat,
                             sppg: item.sppg,
                             kecamatan: item.kecamatan,
                             kelurahan: item.kelurahan,
                             alamat: item.alamat,
                             kepala: item.kepala,
-                            pegawai: parseInt(item.pegawai, 10) || 0,
-                            penerima: parseInt(item.penerima, 10) || 0,
+                            pegawai: isKmp ? 0 : (parseInt(item.pegawai, 10) || 0),
+                            penerima: isKmp ? 0 : (parseInt(item.penerima, 10) || 0),
+                            sekretaris: isKmp ? (item.sekretaris || '') : '',
+                            bendahara: isKmp ? (item.bendahara || '') : '',
                             fileName: item.fileObj.name,
                             publicUrl: publicUrl,
                             submittedAt: formatTimestampID()
@@ -1667,7 +1817,7 @@
                 }
 
                 fireConfetti(); 
-                showToast(`SUKSES! Semua ${successCount} data SPPG berhasil disubmit.`, "success");
+                showToast(`SUKSES! Semua ${successCount} data berhasil disubmit.`, "success");
                 clearInputFormOnly(); 
                 renderWorkspaceContent();
 
@@ -1699,6 +1849,7 @@
 
         // Muat ulang data draft & riwayat otomatis saat halaman dibuka/di-refresh
         document.addEventListener('DOMContentLoaded', async () => {
+            onKategoriChange();
             loadHistoryFromStorage();
             const savedDrafts = await DraftStorage.loadAll();
             if (Array.isArray(savedDrafts) && savedDrafts.length > 0) {
