@@ -10,6 +10,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Leaflet CSS & JS untuk Preview Peta Koordinat -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
     <!-- Supabase JS Client & Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -108,7 +112,7 @@
 
         /* SIDEBAR */
         .sidebar { 
-            width: 320px; 
+            width: 345px; 
             background: var(--sidebar-bg); 
             backdrop-filter: blur(12px); 
             -webkit-backdrop-filter: blur(12px);
@@ -237,14 +241,82 @@
         .custom-select option { background: #ffffff; color: var(--text-primary); }
 
         .input-group { display: flex; flex-direction: column; gap: 5px; animation: slideInRight 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
-        .input-group:nth-child(1) { animation-delay: 0.03s; }
-        .input-group:nth-child(2) { animation-delay: 0.06s; }
-        .input-group:nth-child(3) { animation-delay: 0.09s; }
-        .input-group:nth-child(4) { animation-delay: 0.12s; }
-        .input-group:nth-child(5) { animation-delay: 0.15s; }
-        .input-group:nth-child(6) { animation-delay: 0.18s; }
-        .input-group:nth-child(7) { animation-delay: 0.21s; }
-        .input-group:nth-child(8) { animation-delay: 0.24s; }
+
+        /* KOORDINAT & MINI MAP PREVIEW */
+        .coord-actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            margin-top: 2px;
+        }
+        .btn-coord-tool {
+            flex: 1;
+            background: #eff6ff;
+            color: var(--accent-deep);
+            border: 1px solid #bfdbfe;
+            border-radius: 7px;
+            padding: 6px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+        .btn-coord-tool:hover {
+            background: #dbeafe;
+            border-color: #60a5fa;
+        }
+        .btn-coord-tool.gps-btn {
+            background: #ecfdf5;
+            color: #065f46;
+            border-color: #a7f3d0;
+        }
+        .btn-coord-tool.gps-btn:hover {
+            background: #d1fae5;
+            border-color: #34d399;
+        }
+        .sidebar-map-wrapper {
+            margin-top: 4px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1.5px solid #bfdbfe;
+            background: #e0f2fe;
+            position: relative;
+        }
+        #sidebar-map-preview {
+            width: 100%;
+            height: 165px;
+            z-index: 1;
+        }
+        .map-status-bar {
+            background: #f8fbff;
+            border-top: 1px solid #dbeafe;
+            padding: 6px 10px;
+            font-size: 10.5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .section-divider-label {
+            font-size: 10.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #0369a1;
+            background: #e0f2fe;
+            padding: 5px 10px;
+            border-radius: 7px;
+            border-left: 3px solid #0284c7;
+            margin-top: 2px;
+        }
 
         .pdf-preview-chip {
             display: none;
@@ -277,6 +349,22 @@
             transition: background-color 0.2s ease, transform 0.2s ease;
         }
         .btn-mini-preview:hover { background: var(--accent-deep); transform: translateY(-1px); }
+        .btn-mini-map {
+            background: #0ea5e9;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 5px 9px;
+            font-size: 10.5px;
+            font-weight: 700;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .btn-mini-map:hover { background: #0369a1; transform: translateY(-1px); }
 
         .sidebar-footer { 
             padding: 14px 20px; 
@@ -304,9 +392,7 @@
             flex: 2; 
             box-shadow: 0 6px 16px rgba(37, 99, 235, 0.24);
         }
-        .btn-save:hover { 
-            transform: translateY(-2px); 
-        }
+        .btn-save:hover { transform: translateY(-2px); }
         .btn-save.editing-state {
             background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
             box-shadow: 0 6px 16px rgba(245, 158, 11, 0.28);
@@ -322,7 +408,6 @@
             background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 50%, #e0f2fe 100%); 
         }
 
-        /* Layer Emboss Gradasi Bandung / Bagtapem */
         .workspace-emboss-layer {
             position: absolute;
             inset: 0;
@@ -419,14 +504,8 @@
             box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease; 
         }
-        .btn-submit:hover { 
-            transform: translateY(-2px) scale(1.02); 
-        }
-        .btn-submit:disabled {
-            opacity: 0.75;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .btn-submit:hover { transform: translateY(-2px) scale(1.02); }
+        .btn-submit:disabled { opacity: 0.75; cursor: not-allowed; transform: none; }
 
         .workspace-content { 
             padding: 24px 28px 80px 28px; 
@@ -453,12 +532,7 @@
             flex-wrap: wrap; 
             gap: 12px; 
         }
-        .toolbar-tabs {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
+        .toolbar-tabs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .tab-badge-btn { 
             display: flex; 
             align-items: center; 
@@ -473,10 +547,7 @@
             cursor: pointer;
             transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
-        .tab-badge-btn:hover {
-            border-color: #93c5fd;
-            color: var(--accent-deep);
-        }
+        .tab-badge-btn:hover { border-color: #93c5fd; color: var(--accent-deep); }
         .tab-badge-btn.active {
             background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%); 
             color: var(--accent-deep); 
@@ -516,7 +587,7 @@
         }
         .empty-state p { font-size: 13px; color: var(--text-secondary); max-width: 400px; line-height: 1.55; font-weight: 500; }
 
-        .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(315px, 1fr)); gap: 20px; }
+        .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(335px, 1fr)); gap: 20px; }
         .data-card { 
             background: var(--card-bg); 
             border-radius: var(--radius-lg); 
@@ -529,10 +600,7 @@
             overflow: hidden; 
             will-change: transform;
         }
-        .data-card:hover { 
-            transform: translate3d(0, -4px, 0); 
-            border-color: #60a5fa;
-        }
+        .data-card:hover { transform: translate3d(0, -4px, 0); border-color: #60a5fa; }
         .card-decoration { 
             position: absolute; 
             top: 0; left: 0; right: 0; 
@@ -585,6 +653,7 @@
         .kat-badge.kmp { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
 
         .data-list { display: flex; flex-direction: column; gap: 9px; }
+        .data-grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .data-item { display: flex; flex-direction: column; gap: 3px; }
         .data-label { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.45px; }
         .data-value { font-size: 12.5px; font-weight: 600; color: var(--text-primary); line-height: 1.5; padding: 8px 11px; background: var(--value-bg); border-radius: var(--radius-sm); border: 1px solid var(--value-border); word-break: break-word; }
@@ -612,7 +681,6 @@
         .toast-text { font-size: 12.5px; font-weight: 600; color: var(--text-primary); line-height: 1.45; }
         @keyframes slideInRightToast { to { transform: translateX(0); opacity: 1; } } @keyframes fadeOutRightToast { to { transform: translateX(120%); opacity: 0; } }
 
-        /* TOMBOL BANTUAN MASUK SIMETRIS DI DALAM FRAME WORKSPACE */
         .floating-contact-btn { 
             position: absolute; 
             bottom: 22px; 
@@ -636,14 +704,8 @@
             animation: pulseHalo 3.5s infinite;
             transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         }
-        .floating-contact-btn i {
-            font-size: 16px;
-            color: #e0f2fe;
-        }
-        .floating-contact-btn:hover { 
-            transform: scale(1.04) translateY(-2px); 
-            background: linear-gradient(135deg, #172554 0%, #1d4ed8 55%, #0284c7 100%); 
-        }
+        .floating-contact-btn i { font-size: 16px; color: #e0f2fe; }
+        .floating-contact-btn:hover { transform: scale(1.04) translateY(-2px); background: linear-gradient(135deg, #172554 0%, #1d4ed8 55%, #0284c7 100%); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(2, 6, 23, 0.62); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.25s ease; padding: 16px; }
         .modal-overlay.show { display: flex !important; opacity: 1; }
@@ -662,7 +724,7 @@
         .contact-text h4 { font-size: 13.5px; font-weight: 700; color: var(--accent-deep); margin-bottom: 2px; }
         .contact-text p { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
 
-        /* Modal Preview PDF */
+        /* Modal Preview PDF & Peta */
         .pdf-modal-box {
             width: 860px;
             max-width: 95vw;
@@ -679,7 +741,7 @@
             overflow: hidden;
             position: relative;
         }
-        .pdf-frame-container iframe {
+        .pdf-frame-container iframe, #modal-map-container {
             width: 100%;
             height: 100%;
             border: none;
@@ -700,7 +762,7 @@
             .inner-container { border-radius: 0; height: 100vh; flex-direction: column; }
             .mobile-toggle { display: block; }
             .mobile-close { display: block; }
-            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); z-index: 20; backdrop-filter: none; background: #ffffff; }
+            .sidebar { position: absolute; width: 320px; max-width: 92vw; height: 100%; transform: translateX(-100%); z-index: 20; backdrop-filter: none; background: #ffffff; }
             .sidebar.active { transform: translateX(0); }
             .mobile-overlay.show { display: block; }
             .topbar { padding: 0 18px; backdrop-filter: none; background: #ffffff; }
@@ -766,9 +828,42 @@
                     <textarea id="input-alamat" class="custom-textarea" rows="2" placeholder="Jalan, No., RT/RW..."></textarea>
                 </div>
 
+                <!-- 1. INPUT TITIK KOORDINAT (1 KOLOM GABUNGAN) & LIVE PREVIEW PETA -->
+                <div class="input-group">
+                    <label class="form-label">Titik Koordinat Lokasi (Lat, Lng)</label>
+                    <input type="text" id="input-koordinat" class="custom-input" placeholder="Contoh: -6.899267, 107.615095" oninput="handleCoordinateInput()">
+                    <div class="coord-actions-row">
+                        <button type="button" class="btn-coord-tool gps-btn" onclick="ambilLokasiGPS()">
+                            <i class="fas fa-crosshairs"></i> GPS Saya
+                        </button>
+                        <button type="button" class="btn-coord-tool" onclick="previewSidebarMapModal()">
+                            <i class="fas fa-expand-arrows-alt"></i> Perbesar Peta
+                        </button>
+                    </div>
+                    <div class="sidebar-map-wrapper">
+                        <div id="sidebar-map-preview"></div>
+                        <div class="map-status-bar">
+                            <span id="sidebar-map-status"><i class="fas fa-map-pin" style="color:#2563eb;"></i> Klik peta atau tempel koordinat</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. STRUKTUR PENGURUS (KEPALA/KETUA, SEKRETARIS, BENDAHARA UNTUK SPPG & KMP) -->
+                <div class="section-divider-label">Struktur Pengurus</div>
+
                 <div class="input-group">
                     <label class="form-label" id="label-kepala-unit">Kepala SPPG</label>
                     <input type="text" id="input-kepala" class="custom-input" placeholder="Nama lengkap & gelar...">
+                </div>
+
+                <div class="input-group" id="group-sekretaris">
+                    <label class="form-label" id="label-sekretaris">Sekretaris SPPG</label>
+                    <input type="text" id="input-sekretaris" class="custom-input" placeholder="Nama lengkap Sekretaris...">
+                </div>
+
+                <div class="input-group" id="group-bendahara">
+                    <label class="form-label" id="label-bendahara">Bendahara SPPG</label>
+                    <input type="text" id="input-bendahara" class="custom-input" placeholder="Nama lengkap Bendahara...">
                 </div>
 
                 <!-- KHUSUS SPPG -->
@@ -782,17 +877,20 @@
                     <input type="number" id="input-penerima" class="custom-input" min="0" step="1" placeholder="Contoh: 450" oninput="sanitizeNumberInput(this)">
                 </div>
 
-                <!-- KHUSUS KMP -->
-                <div class="input-group" id="group-kmp-sekretaris" style="display:none;">
-                    <label class="form-label">Sekretaris</label>
-                    <input type="text" id="input-sekretaris" class="custom-input" placeholder="Nama lengkap Sekretaris KMP...">
+                <!-- 3. KONTAK PENANGGUNGJAWAB -->
+                <div class="section-divider-label">Kontak Penanggungjawab</div>
+
+                <div class="input-group">
+                    <label class="form-label">Nama Penanggungjawab</label>
+                    <input type="text" id="input-pj-nama" class="custom-input" placeholder="Nama lengkap penanggungjawab...">
                 </div>
 
-                <div class="input-group" id="group-kmp-bendahara" style="display:none;">
-                    <label class="form-label">Bendahara</label>
-                    <input type="text" id="input-bendahara" class="custom-input" placeholder="Nama lengkap Bendahara KMP...">
+                <div class="input-group">
+                    <label class="form-label">Nomor Telepon Penanggungjawab</label>
+                    <input type="tel" id="input-pj-telepon" class="custom-input" placeholder="Contoh: 081234567890" oninput="sanitizePhoneInput(this)">
                 </div>
 
+                <!-- EVIDENT PDF -->
                 <div class="input-group">
                     <label class="form-label" id="label-evident-file">Evident Lokasi (Wajib PDF, Maks. 2MB)</label>
                     <input type="file" id="input-evident" class="custom-input" accept="application/pdf,.pdf" style="padding: 8px; font-size: 11.5px;" onchange="validatePdfFile(this)">
@@ -812,7 +910,6 @@
 
         <!-- MAIN WORKSPACE -->
         <div class="main-workspace" id="main-workspace">
-            <!-- LAYER LATAR EMBOSS GRADASI -->
             <div class="workspace-emboss-layer">
                 <img src="bg-bandung.jpg" alt="Latar Emboss Bandung" class="emboss-bg-img" onerror="this.onerror=null; this.src='logo-bagtapem.png'; this.classList.add('fallback-logo');">
             </div>
@@ -852,7 +949,6 @@
                 </div>
             </div>
 
-            <!-- TOMBOL BANTUAN SIMETRIS DI DALAM FRAME WORKSPACE -->
             <button class="floating-contact-btn ripple-btn" onclick="openContactModal()" title="Pusat Bantuan IT">
                 <span><i class="fas fa-headset"></i> Bantuan</span>
             </button>
@@ -894,6 +990,24 @@
             </div>
             <div class="pdf-frame-container">
                 <iframe id="pdf-preview-iframe" title="Pratinjau Dokumen PDF"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PRATINJAU PETA KOORDINAT -->
+    <div id="mapPreviewModal" class="modal-overlay">
+        <div class="modal-box pdf-modal-box">
+            <div class="modal-header">
+                <h3 id="map-modal-title"><i class="fas fa-map-marked-alt" style="color: #0ea5e9;"></i> Pratinjau Titik Koordinat</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <a id="map-open-gmaps" href="#" target="_blank" rel="noopener noreferrer" class="action-btn" style="background:#ecfdf5; color:#065f46; border:1px solid #6ee7b7; text-decoration: none;">
+                        <i class="fas fa-external-link-alt"></i> Buka di Google Maps
+                    </a>
+                    <button class="close-modal" onclick="closeMapModal()"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="pdf-frame-container">
+                <div id="modal-map-container"></div>
             </div>
         </div>
     </div>
@@ -952,6 +1066,12 @@
             "Ujungberung": ["Cigending", "Pasanggrahan", "Pasir Endah", "Pasir Jati", "Pasir Wangi"]
         };
 
+        const BANDUNG_DEFAULT_COORDS = [-6.917464, 107.619123];
+        let sidebarMap = null;
+        let sidebarMarker = null;
+        let modalMap = null;
+        let modalMarker = null;
+
         let masterDraftStore = [];
         let submittedHistoryStore = [];
         let temporaryFileObj = null;
@@ -960,6 +1080,168 @@
         let activePdfObjectUrl = null;
         const MAX_PDF_SIZE = 2 * 1024 * 1024; // 2 MB
         const HISTORY_STORAGE_KEY = 'sppg_bandung_submitted_history_v1';
+
+        // ==========================================
+        // PARSING & PETA LEAFLET INTERAKTIF (1 KOLOM)
+        // ==========================================
+        function parseCoordinateString(rawStr) {
+            if (!rawStr || typeof rawStr !== 'string') return null;
+            const cleaned = rawStr.trim();
+            if (!cleaned) return null;
+
+            // Mendukung pemisah koma (,), titik koma (;), atau spasi ganda/tunggal
+            let parts = [];
+            if (cleaned.includes(',')) {
+                parts = cleaned.split(',');
+            } else if (cleaned.includes(';')) {
+                parts = cleaned.split(';');
+            } else {
+                parts = cleaned.split(/\s+/);
+            }
+
+            if (parts.length !== 2) return null;
+
+            const latStr = parts[0].trim();
+            const lngStr = parts[1].trim();
+            if (latStr === '' || lngStr === '') return null;
+
+            const lat = Number(latStr);
+            const lng = Number(lngStr);
+            if (isNaN(lat) || isNaN(lng)) return null;
+            if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+
+            return { lat, lng, latStr, lngStr };
+        }
+
+        function initSidebarMap() {
+            if (typeof L === 'undefined') return;
+            sidebarMap = L.map('sidebar-map-preview', {
+                center: BANDUNG_DEFAULT_COORDS,
+                zoom: 12,
+                zoomControl: true
+            });
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(sidebarMap);
+
+            sidebarMap.on('click', function(e) {
+                const lat = e.latlng.lat.toFixed(6);
+                const lng = e.latlng.lng.toFixed(6);
+                document.getElementById('input-koordinat').value = `${lat}, ${lng}`;
+                setSidebarMapMarker(parseFloat(lat), parseFloat(lng), false);
+            });
+        }
+
+        function setSidebarMapMarker(lat, lng, shouldFly = true) {
+            if (!sidebarMap) return;
+            const statusEl = document.getElementById('sidebar-map-status');
+            if (!sidebarMarker) {
+                sidebarMarker = L.marker([lat, lng], { draggable: true }).addTo(sidebarMap);
+                sidebarMarker.on('dragend', function(ev) {
+                    const pos = ev.target.getLatLng();
+                    const formatted = `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`;
+                    document.getElementById('input-koordinat').value = formatted;
+                    statusEl.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;"></i> Titik pin: ${formatted}`;
+                });
+            } else {
+                sidebarMarker.setLatLng([lat, lng]);
+            }
+
+            if (shouldFly) {
+                sidebarMap.setView([lat, lng], 16);
+            }
+            statusEl.innerHTML = `<i class="fas fa-check-circle" style="color:#10b981;"></i> Titik pin: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        }
+
+        function resetSidebarMap() {
+            if (!sidebarMap) return;
+            if (sidebarMarker) {
+                sidebarMap.removeLayer(sidebarMarker);
+                sidebarMarker = null;
+            }
+            sidebarMap.setView(BANDUNG_DEFAULT_COORDS, 12);
+            document.getElementById('sidebar-map-status').innerHTML = `<i class="fas fa-map-pin" style="color:#2563eb;"></i> Klik peta atau tempel koordinat`;
+        }
+
+        function handleCoordinateInput() {
+            const rawVal = document.getElementById('input-koordinat').value;
+            const parsed = parseCoordinateString(rawVal);
+
+            if (parsed) {
+                setSidebarMapMarker(parsed.lat, parsed.lng, true);
+            } else {
+                document.getElementById('sidebar-map-status').innerHTML = `<i class="fas fa-info-circle" style="color:#d97706;"></i> Format: Latitude, Longitude`;
+            }
+        }
+
+        function ambilLokasiGPS() {
+            if (!navigator.geolocation) {
+                showToast("Browser Anda tidak mendukung fitur GPS.", "error");
+                return;
+            }
+            showToast("Mendeteksi lokasi GPS saat ini...", "warning");
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude.toFixed(6);
+                    const lng = position.coords.longitude.toFixed(6);
+                    document.getElementById('input-koordinat').value = `${lat}, ${lng}`;
+                    setSidebarMapMarker(parseFloat(lat), parseFloat(lng), true);
+                    showToast(`Lokasi GPS ditemukan (${lat}, ${lng})!`, "success");
+                },
+                (err) => {
+                    showToast(`Gagal mengambil GPS: ${err.message}`, "error");
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        }
+
+        function previewSidebarMapModal() {
+            const rawVal = document.getElementById('input-koordinat').value;
+            const parsed = parseCoordinateString(rawVal);
+            const unitName = document.getElementById('input-sppg').value.trim() || 'Preview Lokasi Input';
+
+            if (!parsed) {
+                showToast("Isi titik koordinat (Latitude, Longitude) yang valid terlebih dahulu.", "warning");
+                return;
+            }
+            openMapPreviewModal(parsed.lat, parsed.lng, unitName);
+        }
+
+        function openMapPreviewModal(lat, lng, titleText) {
+            const modal = document.getElementById('mapPreviewModal');
+            const titleEl = document.getElementById('map-modal-title');
+            const gmapsLink = document.getElementById('map-open-gmaps');
+
+            titleEl.innerHTML = `<i class="fas fa-map-marked-alt" style="color: #0ea5e9;"></i> ${escapeHTML(titleText)} (${lat.toFixed(6)}, ${lng.toFixed(6)})`;
+            gmapsLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
+            modal.classList.add('show');
+
+            setTimeout(() => {
+                if (!modalMap) {
+                    modalMap = L.map('modal-map-container').setView([lat, lng], 16);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; OpenStreetMap'
+                    }).addTo(modalMap);
+                } else {
+                    modalMap.invalidateSize();
+                    modalMap.setView([lat, lng], 16);
+                }
+
+                if (modalMarker) {
+                    modalMarker.setLatLng([lat, lng]);
+                } else {
+                    modalMarker = L.marker([lat, lng]).addTo(modalMap);
+                }
+                modalMarker.bindPopup(`<b>${escapeHTML(titleText)}</b><br>Koordinat: ${lat.toFixed(6)}, ${lng.toFixed(6)}`).openPopup();
+            }, 120);
+        }
+
+        function closeMapModal() {
+            document.getElementById('mapPreviewModal').classList.remove('show');
+        }
 
         // ==========================================
         // TOGGLE KATEGORI SPPG vs KMP
@@ -974,11 +1256,12 @@
             document.getElementById('label-kepala-unit').textContent = isKmp ? 'Ketua' : 'Kepala SPPG';
             document.getElementById('input-kepala').placeholder = isKmp ? 'Nama lengkap Ketua...' : 'Nama lengkap & gelar...';
 
+            // Sekretaris & Bendahara aktif untuk SPPG maupun KMP
+            document.getElementById('label-sekretaris').textContent = isKmp ? 'Sekretaris KMP' : 'Sekretaris SPPG';
+            document.getElementById('label-bendahara').textContent = isKmp ? 'Bendahara KMP' : 'Bendahara SPPG';
+
             document.getElementById('group-sppg-pegawai').style.display = isKmp ? 'none' : 'flex';
             document.getElementById('group-sppg-penerima').style.display = isKmp ? 'none' : 'flex';
-
-            document.getElementById('group-kmp-sekretaris').style.display = isKmp ? 'flex' : 'none';
-            document.getElementById('group-kmp-bendahara').style.display = isKmp ? 'flex' : 'none';
 
             document.getElementById('label-evident-file').textContent = isKmp
                 ? 'Evident Layout SOTK (Wajib PDF, Maks. 2MB)'
@@ -1089,11 +1372,14 @@
             }
         }
 
-        // Validasi input angka agar tidak negatif / desimal / karakter aneh
         function sanitizeNumberInput(el) {
             if (el.value === '') return;
-            const cleaned = el.value.replace(/[^0-9]/g, '');
-            el.value = cleaned;
+            el.value = el.value.replace(/[^0-9]/g, '');
+        }
+
+        function sanitizePhoneInput(el) {
+            if (el.value === '') return;
+            el.value = el.value.replace(/[^0-9+]/g, '');
         }
 
         function showToast(message, type = 'success') {
@@ -1127,7 +1413,13 @@
         function closeConfirmModal() { document.getElementById('confirmModal').classList.remove('show'); currentConfirmAction = null; }
         document.getElementById('confirm-yes-btn').addEventListener('click', () => { if(currentConfirmAction) currentConfirmAction(); closeConfirmModal(); });
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('mobile-overlay').classList.toggle('show'); }
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('mobile-overlay').classList.toggle('show');
+            if (sidebarMap) {
+                setTimeout(() => sidebarMap.invalidateSize(), 360);
+            }
+        }
 
         function renderSidebarPdfPreview(file, isExistingDraftFile = false) {
             const preview = document.getElementById('preview-evident-pdf');
@@ -1211,11 +1503,15 @@
             document.getElementById('input-kecamatan').value = '';
             document.getElementById('input-kelurahan').innerHTML = '<option value="">-- Pilih Kelurahan Dulu --</option>';
             document.getElementById('input-alamat').value = '';
+            document.getElementById('input-koordinat').value = '';
+            resetSidebarMap();
             document.getElementById('input-kepala').value = '';
-            document.getElementById('input-pegawai').value = '';
-            document.getElementById('input-penerima').value = '';
             document.getElementById('input-sekretaris').value = '';
             document.getElementById('input-bendahara').value = '';
+            document.getElementById('input-pegawai').value = '';
+            document.getElementById('input-penerima').value = '';
+            document.getElementById('input-pj-nama').value = '';
+            document.getElementById('input-pj-telepon').value = '';
             document.getElementById('input-evident').value = '';
             renderSidebarPdfPreview(null);
             temporaryFileObj = null;
@@ -1242,11 +1538,15 @@
             const kecamatan = document.getElementById('input-kecamatan').value;
             const kelurahan = document.getElementById('input-kelurahan').value;
             const alamat = document.getElementById('input-alamat').value.trim();
+            const koordinatRaw = document.getElementById('input-koordinat').value.trim();
+            const parsedCoord = parseCoordinateString(koordinatRaw);
             const kepala = document.getElementById('input-kepala').value.trim();
-            const pegawaiRaw = document.getElementById('input-pegawai').value.trim();
-            const penerimaRaw = document.getElementById('input-penerima').value.trim();
             const sekretaris = document.getElementById('input-sekretaris').value.trim();
             const bendahara = document.getElementById('input-bendahara').value.trim();
+            const pegawaiRaw = document.getElementById('input-pegawai').value.trim();
+            const penerimaRaw = document.getElementById('input-penerima').value.trim();
+            const pjNama = document.getElementById('input-pj-nama').value.trim();
+            const pjTelepon = document.getElementById('input-pj-telepon').value.trim();
 
             if (!sppg) {
                 showToast(isKmp ? "Nama KMP wajib diisi!" : "Nama SPPG wajib diisi!", "warning");
@@ -1268,24 +1568,28 @@
                 document.getElementById('input-alamat').focus();
                 return;
             }
+            if (!parsedCoord) {
+                showToast("Titik koordinat wajib diisi dengan format Latitude, Longitude yang valid!", "warning");
+                document.getElementById('input-koordinat').focus();
+                return;
+            }
             if (!kepala) {
                 showToast(isKmp ? "Nama Ketua KMP wajib diisi!" : "Nama Kepala SPPG wajib diisi!", "warning");
                 document.getElementById('input-kepala').focus();
                 return;
             }
+            if (!sekretaris) {
+                showToast(`Nama Sekretaris ${kategori} wajib diisi!`, "warning");
+                document.getElementById('input-sekretaris').focus();
+                return;
+            }
+            if (!bendahara) {
+                showToast(`Nama Bendahara ${kategori} wajib diisi!`, "warning");
+                document.getElementById('input-bendahara').focus();
+                return;
+            }
 
-            if (isKmp) {
-                if (!sekretaris) {
-                    showToast("Nama Sekretaris KMP wajib diisi!", "warning");
-                    document.getElementById('input-sekretaris').focus();
-                    return;
-                }
-                if (!bendahara) {
-                    showToast("Nama Bendahara KMP wajib diisi!", "warning");
-                    document.getElementById('input-bendahara').focus();
-                    return;
-                }
-            } else {
+            if (!isKmp) {
                 if (pegawaiRaw === '' || isNaN(Number(pegawaiRaw)) || Number(pegawaiRaw) < 0) {
                     showToast("Jumlah Pegawai wajib diisi dengan angka minimal 0!", "warning");
                     document.getElementById('input-pegawai').focus();
@@ -1296,6 +1600,17 @@
                     document.getElementById('input-penerima').focus();
                     return;
                 }
+            }
+
+            if (!pjNama) {
+                showToast("Nama Penanggungjawab wajib diisi!", "warning");
+                document.getElementById('input-pj-nama').focus();
+                return;
+            }
+            if (!pjTelepon || pjTelepon.replace(/[^0-9]/g, '').length < 8) {
+                showToast("Nomor Telepon Penanggungjawab wajib diisi minimal 8 digit angka!", "warning");
+                document.getElementById('input-pj-telepon').focus();
+                return;
             }
 
             if (!temporaryFileObj) {
@@ -1309,6 +1624,9 @@
                 return;
             }
 
+            const latitude = parsedCoord.latStr;
+            const longitude = parsedCoord.lngStr;
+            const koordinatFormatted = `${latitude}, ${longitude}`;
             const pegawai = isKmp ? 0 : parseInt(pegawaiRaw, 10);
             const penerima = isKmp ? 0 : parseInt(penerimaRaw, 10);
 
@@ -1320,11 +1638,16 @@
                     kecamatan,
                     kelurahan,
                     alamat,
+                    latitude,
+                    longitude,
+                    koordinat: koordinatFormatted,
                     kepala,
+                    sekretaris,
+                    bendahara,
                     pegawai,
                     penerima,
-                    sekretaris: isKmp ? sekretaris : '',
-                    bendahara: isKmp ? bendahara : '',
+                    pjNama,
+                    pjTelepon,
                     fileObj: temporaryFileObj,
                     fileName: temporaryFileObj.name
                 };
@@ -1337,11 +1660,16 @@
                     kecamatan,
                     kelurahan,
                     alamat,
+                    latitude,
+                    longitude,
+                    koordinat: koordinatFormatted,
                     kepala,
+                    sekretaris,
+                    bendahara,
                     pegawai,
                     penerima,
-                    sekretaris: isKmp ? sekretaris : '',
-                    bendahara: isKmp ? bendahara : '',
+                    pjNama,
+                    pjTelepon,
                     fileObj: temporaryFileObj,
                     fileName: temporaryFileObj.name
                 };
@@ -1375,11 +1703,24 @@
             updateKelurahanDropdown();
             document.getElementById('input-kelurahan').value = item.kelurahan || '';
             document.getElementById('input-alamat').value = item.alamat || '';
+
+            const combinedCoord = item.koordinat || ((item.latitude && item.longitude) ? `${item.latitude}, ${item.longitude}` : '');
+            document.getElementById('input-koordinat').value = combinedCoord;
+
+            const parsed = parseCoordinateString(combinedCoord);
+            if (parsed) {
+                setSidebarMapMarker(parsed.lat, parsed.lng, true);
+            } else {
+                resetSidebarMap();
+            }
+
             document.getElementById('input-kepala').value = item.kepala || '';
-            document.getElementById('input-pegawai').value = item.pegawai !== undefined ? item.pegawai : '';
-            document.getElementById('input-penerima').value = item.penerima !== undefined ? item.penerima : '';
             document.getElementById('input-sekretaris').value = item.sekretaris || '';
             document.getElementById('input-bendahara').value = item.bendahara || '';
+            document.getElementById('input-pegawai').value = item.pegawai !== undefined ? item.pegawai : '';
+            document.getElementById('input-penerima').value = item.penerima !== undefined ? item.penerima : '';
+            document.getElementById('input-pj-nama').value = item.pjNama || '';
+            document.getElementById('input-pj-telepon').value = item.pjTelepon || '';
             document.getElementById('input-evident').value = '';
 
             if (item.fileObj) {
@@ -1422,6 +1763,76 @@
             }
         }
 
+        function buildCardDetailsHTML(item, isHistory = false, index = 0) {
+            const kat = (item.kategori || 'SPPG').toUpperCase();
+            const isKmp = kat === 'KMP';
+            const safeKecKel = `${escapeHTML(item.kecamatan)} / ${escapeHTML(item.kelurahan)}`;
+            const safeAlamat = escapeHTML(item.alamat || '-');
+            const safeKepala = escapeHTML(item.kepala || '-');
+            const safeSekretaris = escapeHTML(item.sekretaris || '-');
+            const safeBendahara = escapeHTML(item.bendahara || '-');
+            const safePegawai = escapeHTML(item.pegawai ?? '0');
+            const safePenerima = escapeHTML(item.penerima ?? '0');
+            const safePjNama = escapeHTML(item.pjNama || '-');
+            const safePjTelepon = escapeHTML(item.pjTelepon || '-');
+
+            const combinedCoord = item.koordinat || ((item.latitude && item.longitude) ? `${item.latitude}, ${item.longitude}` : '');
+            const parsedCoord = parseCoordinateString(combinedCoord);
+            const coordText = parsedCoord ? escapeHTML(combinedCoord) : 'Belum diset';
+            const mapBtnHtml = parsedCoord
+                ? `<button type="button" class="btn-mini-map" onclick="openMapPreviewModal(${parsedCoord.lat}, ${parsedCoord.lng}, '${escapeHTML(item.sppg).replace(/'/g, "\\'")}')"><i class="fas fa-map-marker-alt"></i> Lihat Peta</button>`
+                : '';
+
+            const fileNameRaw = !isHistory && item.fileObj ? item.fileObj.name : (item.fileName || 'Dokumen Evident.pdf');
+            const safeFileName = escapeHTML(fileNameRaw);
+            const pdfBtnHtml = isHistory
+                ? (item.publicUrl ? `<button type="button" class="btn-mini-preview" onclick="previewHistoryPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : '')
+                : (item.fileObj ? `<button type="button" class="btn-mini-preview" onclick="previewDraftPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : '');
+
+            const sppgStatsHtml = isKmp ? '' : `
+                <div class="data-grid-2col">
+                    <div class="data-item"><span class="data-label">Jumlah Pegawai</span><span class="data-value">${safePegawai} Orang</span></div>
+                    <div class="data-item"><span class="data-label">Penerima Manfaat</span><span class="data-value">${safePenerima} Target</span></div>
+                </div>
+            `;
+
+            return `
+                <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
+                <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
+                <div class="data-item">
+                    <span class="data-label">Titik Koordinat Lokasi</span>
+                    <div class="data-value file-row">
+                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${coordText}">
+                            <i class="fas fa-map-pin" style="color: #0ea5e9; margin-right: 4px;"></i> ${coordText}
+                        </span>
+                        ${mapBtnHtml}
+                    </div>
+                </div>
+                <div class="data-item"><span class="data-label">${isKmp ? 'Ketua' : 'Kepala SPPG'}</span><span class="data-value">${safeKepala}</span></div>
+                <div class="data-grid-2col">
+                    <div class="data-item"><span class="data-label">Sekretaris</span><span class="data-value">${safeSekretaris}</span></div>
+                    <div class="data-item"><span class="data-label">Bendahara</span><span class="data-value">${safeBendahara}</span></div>
+                </div>
+                ${sppgStatsHtml}
+                <div class="data-item">
+                    <span class="data-label">Kontak Penanggungjawab</span>
+                    <div class="data-value">
+                        <i class="fas fa-user-shield" style="color:#2563eb; margin-right:5px;"></i> <strong>${safePjNama}</strong>
+                        <span style="color:#0369a1; margin-left:6px;"><i class="fas fa-phone-alt"></i> ${safePjTelepon}</span>
+                    </div>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">${isKmp ? 'Evident Layout SOTK' : 'Evident Lokasi'}</span>
+                    <div class="data-value file-row">
+                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${safeFileName}">
+                            <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileName}
+                        </span>
+                        ${pdfBtnHtml}
+                    </div>
+                </div>
+            `;
+        }
+
         function renderWorkspaceContent() {
             updateTabUI();
             const previewArea = document.getElementById('preview-area');
@@ -1449,48 +1860,7 @@
                     const kat = (item.kategori || 'SPPG').toUpperCase();
                     const isKmp = kat === 'KMP';
                     const safeSppg = escapeHTML(item.sppg);
-                    const safeKecKel = `${escapeHTML(item.kecamatan)} / ${escapeHTML(item.kelurahan)}`;
-                    const safeAlamat = escapeHTML(item.alamat || '-');
-                    const safeKepala = escapeHTML(item.kepala || '-');
-                    const safePegawai = escapeHTML(item.pegawai ?? '0');
-                    const safePenerima = escapeHTML(item.penerima ?? '0');
-                    const safeSekretaris = escapeHTML(item.sekretaris || '-');
-                    const safeBendahara = escapeHTML(item.bendahara || '-');
-                    const safeFileName = escapeHTML(item.fileName || 'Dokumen Evident.pdf');
                     const safeTime = escapeHTML(item.submittedAt || '-');
-                    const safeUrl = item.publicUrl ? escapeHTML(item.publicUrl) : '';
-
-                    const detailItemsHtml = isKmp ? `
-                        <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
-                        <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
-                        <div class="data-item"><span class="data-label">Ketua</span><span class="data-value">${safeKepala}</span></div>
-                        <div class="data-item"><span class="data-label">Sekretaris</span><span class="data-value">${safeSekretaris}</span></div>
-                        <div class="data-item"><span class="data-label">Bendahara</span><span class="data-value">${safeBendahara}</span></div>
-                        <div class="data-item">
-                            <span class="data-label">Evident Layout SOTK</span>
-                            <div class="data-value file-row">
-                                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                                    <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileName}
-                                </span>
-                                ${safeUrl ? `<button type="button" class="btn-mini-preview" onclick="previewHistoryPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
-                            </div>
-                        </div>
-                    ` : `
-                        <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
-                        <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
-                        <div class="data-item"><span class="data-label">Kepala SPPG</span><span class="data-value">${safeKepala}</span></div>
-                        <div class="data-item"><span class="data-label">Jumlah Pegawai</span><span class="data-value">${safePegawai} Orang</span></div>
-                        <div class="data-item"><span class="data-label">Penerima Manfaat / Sekolah</span><span class="data-value">${safePenerima} Target</span></div>
-                        <div class="data-item">
-                            <span class="data-label">Evident Lokasi</span>
-                            <div class="data-value file-row">
-                                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                                    <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileName}
-                                </span>
-                                ${safeUrl ? `<button type="button" class="btn-mini-preview" onclick="previewHistoryPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
-                            </div>
-                        </div>
-                    `;
 
                     histHtml += `
                         <div class="data-card" style="animation-delay: ${index * 0.05}s">
@@ -1511,7 +1881,7 @@
                                 </div>
                             </div>
                             <div class="data-list">
-                                ${detailItemsHtml}
+                                ${buildCardDetailsHTML(item, true, index)}
                             </div>
                         </div>
                     `;
@@ -1532,47 +1902,6 @@
                 const kat = (item.kategori || 'SPPG').toUpperCase();
                 const isKmp = kat === 'KMP';
                 const safeSppg = escapeHTML(item.sppg);
-                const safeKecKel = `${escapeHTML(item.kecamatan)} / ${escapeHTML(item.kelurahan)}`;
-                const safeAlamat = escapeHTML(item.alamat || '-');
-                const safeKepala = escapeHTML(item.kepala || '-');
-                const safePegawai = escapeHTML(item.pegawai ?? '0');
-                const safePenerima = escapeHTML(item.penerima ?? '0');
-                const safeSekretaris = escapeHTML(item.sekretaris || '-');
-                const safeBendahara = escapeHTML(item.bendahara || '-');
-                const fileNameRaw = item.fileObj ? item.fileObj.name : (item.fileName || 'Tidak ada file');
-                const safeFileStatus = escapeHTML(fileNameRaw);
-
-                const draftDetailsHtml = isKmp ? `
-                    <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
-                    <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
-                    <div class="data-item"><span class="data-label">Ketua</span><span class="data-value">${safeKepala}</span></div>
-                    <div class="data-item"><span class="data-label">Sekretaris</span><span class="data-value">${safeSekretaris}</span></div>
-                    <div class="data-item"><span class="data-label">Bendahara</span><span class="data-value">${safeBendahara}</span></div>
-                    <div class="data-item">
-                        <span class="data-label">Evident Layout SOTK</span>
-                        <div class="data-value file-row">
-                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${safeFileStatus}">
-                                <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileStatus}
-                            </span>
-                            ${item.fileObj ? `<button type="button" class="btn-mini-preview" onclick="previewDraftPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
-                        </div>
-                    </div>
-                ` : `
-                    <div class="data-item"><span class="data-label">Kecamatan / Kelurahan</span><span class="data-value">${safeKecKel}</span></div>
-                    <div class="data-item"><span class="data-label">Alamat</span><span class="data-value">${safeAlamat}</span></div>
-                    <div class="data-item"><span class="data-label">Kepala SPPG</span><span class="data-value">${safeKepala}</span></div>
-                    <div class="data-item"><span class="data-label">Jumlah Pegawai</span><span class="data-value">${safePegawai} Orang</span></div>
-                    <div class="data-item"><span class="data-label">Penerima Manfaat / Sekolah</span><span class="data-value">${safePenerima} Target</span></div>
-                    <div class="data-item">
-                        <span class="data-label">Evident Lokasi</span>
-                        <div class="data-value file-row">
-                            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${safeFileStatus}">
-                                <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 4px;"></i> ${safeFileStatus}
-                            </span>
-                            ${item.fileObj ? `<button type="button" class="btn-mini-preview" onclick="previewDraftPdf(${index})"><i class="fas fa-eye"></i> Lihat PDF</button>` : ''}
-                        </div>
-                    </div>
-                `;
 
                 html += `
                     <div class="data-card" style="animation-delay: ${index * 0.06}s">
@@ -1585,7 +1914,7 @@
                             <span class="kat-badge ${isKmp ? 'kmp' : 'sppg'}">${kat}</span>
                         </div>
                         <div class="data-list">
-                            ${draftDetailsHtml}
+                            ${buildCardDetailsHTML(item, false, index)}
                         </div>
                         <div class="card-actions">
                             <button type="button" class="action-btn action-edit" onclick="editDraft(${index})"><i class="fas fa-edit"></i> Edit</button>
@@ -1698,7 +2027,7 @@
         }
 
         // ==========================================
-        // SUBMIT KE SUPABASE (ANTI-DUPLIKASI PARTIAL UPLOAD)
+        // SUBMIT KE SUPABASE
         // ==========================================
         async function submitKeSupabase() {
             if (masterDraftStore.length === 0) {
@@ -1754,6 +2083,11 @@
 
                         publicUrl = urlData.publicUrl;
 
+                        const combinedCoord = item.koordinat || ((item.latitude && item.longitude) ? `${item.latitude}, ${item.longitude}` : '');
+                        const parsedCoord = parseCoordinateString(combinedCoord);
+                        const latNum = parsedCoord ? parsedCoord.lat : null;
+                        const lngNum = parsedCoord ? parsedCoord.lng : null;
+
                         const { error: insertError } = await supabaseClient
                             .from('data_sppg')
                             .insert([
@@ -1763,11 +2097,16 @@
                                     kecamatan: item.kecamatan,
                                     kelurahan: item.kelurahan,
                                     alamat: item.alamat,
+                                    latitude: latNum,
+                                    longitude: lngNum,
+                                    koordinat: parsedCoord ? `${parsedCoord.latStr}, ${parsedCoord.lngStr}` : null,
                                     kepala_sppg: item.kepala,
+                                    sekretaris: item.sekretaris || '',
+                                    bendahara: item.bendahara || '',
                                     jumlah_pegawai: isKmp ? 0 : (parseInt(item.pegawai, 10) || 0),
                                     jumlah_penerima: isKmp ? 0 : (parseInt(item.penerima, 10) || 0),
-                                    sekretaris: isKmp ? (item.sekretaris || '') : null,
-                                    bendahara: isKmp ? (item.bendahara || '') : null,
+                                    nama_penanggungjawab: item.pjNama || '',
+                                    no_telp_penanggungjawab: item.pjTelepon || '',
                                     evident_lokasi: publicUrl
                                 }
                             ]);
@@ -1786,11 +2125,16 @@
                             kecamatan: item.kecamatan,
                             kelurahan: item.kelurahan,
                             alamat: item.alamat,
+                            latitude: parsedCoord ? parsedCoord.latStr : '',
+                            longitude: parsedCoord ? parsedCoord.lngStr : '',
+                            koordinat: parsedCoord ? `${parsedCoord.latStr}, ${parsedCoord.lngStr}` : '',
                             kepala: item.kepala,
+                            sekretaris: item.sekretaris || '',
+                            bendahara: item.bendahara || '',
                             pegawai: isKmp ? 0 : (parseInt(item.pegawai, 10) || 0),
                             penerima: isKmp ? 0 : (parseInt(item.penerima, 10) || 0),
-                            sekretaris: isKmp ? (item.sekretaris || '') : '',
-                            bendahara: isKmp ? (item.bendahara || '') : '',
+                            pjNama: item.pjNama || '',
+                            pjTelepon: item.pjTelepon || '',
                             fileName: item.fileObj.name,
                             publicUrl: publicUrl,
                             submittedAt: formatTimestampID()
@@ -1850,6 +2194,8 @@
         // Muat ulang data draft & riwayat otomatis saat halaman dibuka/di-refresh
         document.addEventListener('DOMContentLoaded', async () => {
             onKategoriChange();
+            initSidebarMap();
+            setTimeout(() => { if (sidebarMap) sidebarMap.invalidateSize(); }, 250);
             loadHistoryFromStorage();
             const savedDrafts = await DraftStorage.loadAll();
             if (Array.isArray(savedDrafts) && savedDrafts.length > 0) {
